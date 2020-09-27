@@ -6,6 +6,13 @@
 
 **In Categories:** {{ mod.get_cat_links(cats) }}
 
+{%- if mod.license %}
+{%- if mod.license_url %}
+**License:** <a href="{{ mod.license_url }}">{{ mod.license }}</a>
+{%- else %}
+**License:** {{ mod.license }}
+{%- endif %}
+
 {%- if mod.related_links|length > 0 %}
 
 **Other mods with the same name:**
@@ -64,12 +71,12 @@
 
 {#- -------------------- Youtube Links -------------------- #}
 
-{%- if mod.youtube_urls|length > 0 %}
+{%- if mod.video_urls|length > 0 %}
 
-## Youtube Videos
+## Video Videos
 
-{% for yt in mod.youtube_urls -%}
-- {{ yt.wiki_link() }}
+{% for vid in mod.video_urls -%}
+- {{ vid.wiki_link() }}
 {% endfor %}
 {%- endif %}
 

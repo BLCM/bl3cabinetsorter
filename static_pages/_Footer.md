@@ -1,4 +1,4 @@
-*ModCabinet is auto-generated based on information found in the [BLCM Github](https://github.com/BLCM/BLCMods).
+*BL3 ModCabinet is auto-generated based on information found in the [bl3mods Github](https://github.com/BLCM/bl3mods).
 Information here could be wrong in various ways.  The [[About ModCabinet Wiki]] page will have information
 about any errors encountered while building the wiki.  If you see something amiss, please stop by
 [Shadow's Evil Hideout](http://borderlandsmodding.com/community/) and let us know.  (Apocalyptech is the

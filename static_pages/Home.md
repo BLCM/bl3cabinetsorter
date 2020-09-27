@@ -1,11 +1,11 @@
 Welcome!
 
 The ModCabinet wiki exists to provide a slightly-easier way of browsing through
-the Borderlands 2/TPS mods hosted on the
-[BLCMods Github](https://github.com/BLCM/BLCMods) -- all nicely arranged in
+the Borderlands 3 mods hosted on the
+[bl3mods Github](https://github.com/BLCM/bl3mods) -- all nicely arranged in
 categories rather than just organized by author.  
 
-Note that in addition to this github, another common place to find BL2/TPS
+Note that in addition to this github, another common place to find BL3
 mods is Nexusmods -- you can find some more links to those resources on
 [borderlandsmodding.com](http://borderlandsmodding.com/finding-mods/).
 
@@ -15,8 +15,7 @@ Wiki](https://github.com/BLCM/BLCMods/wiki) is your best starting point.
 
 # Mod Categories
 
-- [[Borderlands 2 Mods|Borderlands 2]]
-- [[Borderlands: The Pre-Sequel Mods|Pre Sequel]]
+- [[Borderlands 3 Mods|Borderlands 3]]
 
 # Other Pages
 

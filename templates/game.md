@@ -1,4 +1,4 @@
-# {{ game.title }} Mods
+# Borderlands 3 Mods
 
 [[← Go Back|Home]]
 
@@ -8,8 +8,8 @@ Categories:
 - {{ cat.prefix }}
 {%- endif %}
 {%- if cat.prefix %}
-  - {{ cat.wiki_link(game) }}
+  - {{ cat.wiki_link() }}
 {%- else %}
-- {{ cat.wiki_link(game) }}
+- {{ cat.wiki_link() }}
 {%- endif %}
 {%- endfor %}

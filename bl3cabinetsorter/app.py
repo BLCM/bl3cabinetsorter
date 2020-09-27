@@ -74,10 +74,8 @@ class DirInfo(object):
         self.dirpath = dirpath
         self.rel_dirpath = dirpath[len(self.repo_dir)+1:]
         path_components = self.rel_dirpath.split(os.sep)
-        if len(path_components) > 1:
-            self.dir_author = path_components[1]
-        else:
-            self.dir_author = '(unknown)'
+        if path_components:
+            self.dir_author = path_components[0]
         self.cur_path = path_components[-1]
         self.lower_mapping = {}
         self.extension_map = {}
@@ -258,24 +256,21 @@ class Author(Cacheable):
     def __init__(self, mtime, initial_status=Cacheable.S_UNKNOWN, name=None):
         super().__init__(mtime, initial_status)
         self.name = name
-        self.mods = {}
-        self.cur_mods = {}
+        self.mods = set()
+        self.cur_mods = set()
 
     def _serialize(self):
         return {
                 'n': self.name,
-                'g': dict([(game, list(modset)) for (game, modset) in self.mods.items()]),
+                'g': list(self.mods),
                 }
 
     def _unserialize(self, input_dict):
         self.name = input_dict['n']
-        for (game, modlist) in input_dict['g'].items():
-            self.mods[game] = set(modlist)
+        self.mods = set(input_dict['g'])
 
     def add_mod(self, mod):
-        if mod.game not in self.cur_mods:
-            self.cur_mods[mod.game] = set()
-        self.cur_mods[mod.game].add(mod.wiki_link())
+        self.cur_mods.add(mod.wiki_link())
 
     def check_modlist(self):
         if self.cur_mods != self.mods:
@@ -369,6 +364,12 @@ class ModURL(object):
             return False
         return self.url == other.url and self.text == other.text
 
+class NotAModFile(Exception):
+    """
+    Custom exception to throw when we try to parse a modfile which turns out to not
+    actually be a properly-formatted mod file.
+    """
+
 class ModFile(Cacheable):
     """
     Class to pull info out of a mod file.
@@ -376,24 +377,30 @@ class ModFile(Cacheable):
 
     cache_key = 'mods'
 
-    def __init__(self, mtime, dirinfo=None, filename=None, initial_status=Cacheable.S_UNKNOWN, game=None):
+    def __init__(self, mtime, dirinfo=None, filename=None, initial_status=Cacheable.S_UNKNOWN,
+            error_list=None, valid_categories=None):
         super().__init__(mtime, initial_status)
+        self.error_list = error_list
+        self.valid_categories = valid_categories
         self.mod_time = datetime.datetime.fromtimestamp(mtime)
         self.mod_title = None
         self.mod_title_display = None
+        self.version = None
+        self.license = None
+        self.license_url = None
         self.wiki_filename_base = None
         self.mod_desc = []
         self.readme_rel = None
         self.readme_desc = []
         self.nexus_link = None
         self.screenshots = []
-        self.youtube_urls = []
+        self.video_urls = []
         self.urls = []
         self.categories = set()
         self.changelog = []
         self.related_links = []
         self.re = Re()
-        self.game = game
+        self.errors = False
 
         if dirinfo:
             # This is when we're actually loading from a file
@@ -418,14 +425,11 @@ class ModFile(Cacheable):
 
             with open(self.full_filename, encoding=encoding) as df:
                 first_line = df.readline()
-                if first_line.strip() == '':
+                while first_line.strip() == '':
                     first_line = df.readline()
-                if '<BLCMM' in first_line:
-                    self.load_blcmm(df)
-                elif first_line.startswith('#<'):
-                    self.load_ft(df)
-                else:
-                    self.load_unknown(df)
+                    if first_line == '':
+                        raise NotAModFile('Empty file found')
+                self.load_text_hotfixes(df)
         else:
             # This is used when deserializing
             self.seen = False
@@ -438,6 +442,12 @@ class ModFile(Cacheable):
         if len(self.mod_desc) > 0:
             while self.mod_desc[-1] == '':
                 self.mod_desc.pop()
+
+    def has_errors(self):
+        """
+        Return whether or not we have errors
+        """
+        return self.errors
 
     def _serialize(self):
         """
@@ -455,6 +465,9 @@ class ModFile(Cacheable):
                 'a': self.mod_author,
                 't': self.mod_title,
                 'i': self.mod_title_display,
+                'v': self.version,
+                'li': self.license,
+                'lu': self.license_url,
                 'd': self.mod_desc,
                 'r': self.readme_desc,
                 'l': self.readme_rel,
@@ -462,10 +475,9 @@ class ModFile(Cacheable):
                 'e': sorted(self.related_links),
                 'n': nl,
                 's': [str(s) for s in self.screenshots],
-                'y': [str(y) for y in self.youtube_urls],
+                'y': [str(y) for y in self.video_urls],
                 'u': [str(u) for u in self.urls],
                 'c': list(self.categories),
-                'g': self.game,
                 }
 
     def _unserialize(self, input_dict):
@@ -479,6 +491,9 @@ class ModFile(Cacheable):
         self.mod_author = input_dict['a']
         self.mod_title = input_dict['t']
         self.mod_title_display = input_dict['i']
+        self.version = input_dict['v']
+        self.license = input_dict['li']
+        self.license_url = input_dict['lu']
         self.mod_desc = input_dict['d']
         self.readme_desc = input_dict['r']
         self.readme_rel = input_dict['l']
@@ -489,27 +504,15 @@ class ModFile(Cacheable):
         else:
             self.nexus_link = None
         self.screenshots = [ModURL(u) for u in input_dict['s']]
-        self.youtube_urls = [ModURL(u) for u in input_dict['y']]
+        self.video_urls = [ModURL(u) for u in input_dict['y']]
         self.urls = [ModURL(u) for u in input_dict['u']]
         self.categories = set(input_dict['c'])
-        self.game = input_dict['g']
 
     def get_full_rel_filename(self):
         """
         Returns our "full" relative filename
         """
         return os.path.join(self.rel_path, self.rel_filename)
-
-    def set_categories(self, categories):
-        """
-        Sets our categories, updating our status if need be
-        """
-        self.seen = True
-        new_cats = set(categories)
-        if new_cats != self.categories:
-            if self.status != Cacheable.S_NEW:
-                self.status = Cacheable.S_UPDATED
-            self.categories = new_cats
 
     def set_title_display(self, mod_title_display):
         """
@@ -543,39 +546,6 @@ class ModFile(Cacheable):
                 self.status = Cacheable.S_UPDATED
             self.related_links = new_links
 
-    def set_urls(self, urls):
-        """
-        Finalize our URLs, which will put them into the appropriate
-        data structures, and also update our status to S_UPDATED if
-        need be.
-        """
-        self.seen = True
-        nexus_link = None
-        screenshots = []
-        youtube_urls = []
-        new_urls = []
-        for url in urls:
-            url_lower = url.lower()
-            if 'nexusmods.com' in url_lower:
-                nexus_link = ModURL(url)
-            elif 'youtube.com' in url_lower or 'youtu.be' in url_lower:
-                youtube_urls.append(ModURL(url))
-            elif url_lower.endswith('.jpg') or url_lower.endswith('.png') or url_lower.endswith('.gif'):
-                screenshots.append(ModURL(url))
-            else:
-                new_urls.append(ModURL(url))
-        if (self.status != Cacheable.S_NEW
-                and (nexus_link != self.nexus_link
-                    or screenshots != self.screenshots
-                    or youtube_urls != self.youtube_urls
-                    or new_urls != self.urls
-                    )):
-            self.status = Cacheable.S_UPDATED
-        self.screenshots = screenshots
-        self.nexus_link = nexus_link
-        self.youtube_urls = youtube_urls
-        self.urls = new_urls
-
     def update_readme_desc(self, readme, new_desc):
         """
         Updates our README description with the given array
@@ -601,103 +571,128 @@ class ModFile(Cacheable):
             self.status = Cacheable.S_UPDATED
         self.changelog = new_changelog
 
-    def load_blcmm(self, df):
+    def load_text_hotfixes(self, df):
         """
-        Loads in a BLCMM-formatted file.  The idea is to grab the first category
-        name, as the title of the mod, and then the first comment block we find.
-        """
-        finding_main_cat = True
-        reading_comments = False
-        cat_re = re.compile('<category name="(.*?)"(>| MUT=)')
-        comment_re = re.compile('<comment>(.*)</comment>')
-        for line in df.readlines():
-            if finding_main_cat:
-                if self.re.search(cat_re, line):
-                    self.mod_title = self.re.last_match.group(1).strip().replace('\\"', '"')
-                    finding_main_cat = False
-            elif reading_comments:
-                if self.re.search(comment_re, line):
-                    self.add_comment_line(self.re.last_match.group(1))
-                else:
-                    # If we got here, we had some comments but found Something Else.
-                    # Stop processing at this point
-                    return
-            else:
-                if self.re.search(comment_re, line):
-                    reading_comments = True
-                    self.add_comment_line(self.re.last_match.group(1))
+        This is currently the only known form of mod file - it's a text-based format
+        which uses # for comments at the top, where we're expecting a series of key-value
+        based pairs, probably followed by some more freeform explanations, and then
+        finally a series of nearly-raw hotfix statements, all starting the line with
+        the characters `Spark`.
 
-    def load_ft(self, df):
-        """
-        Loads in a FilterTool-formatted file.  The idea is to grab the first category
-        name, as the title of the mod, and then the first comment block we find.  This
-        is a bit trickier than BLCMM files since comments are just plaintext inline
-        with everything else.
+        Everything up to our first instance of `Spark` will be processed for those
+        keywords, and also text descriptions.
+
+        Required keys up at the top:
+         - Name
+         - Categories
+        Other keys which can be specified:
+         - Author (actually ignored, in favor of the directory name)
+         - Version
+         - License
+         - License URL
+         - Screenshot (can be specified multiple times)
+         - Video (can be specified multiple times)
+         - Nexus (URL to mod at nexus)
+         - URL (other URL)
+
+        We do some processing here to try and separate out any freeform "global"
+        mod description text in the header, and a comment that might precede a
+        hotfix statement.  This'll fail in various cases (like if someone's using
+        some stronger "header" statements) but I feel it's better than nothing.
+        That's why we do all the cur_section nonsense in here.
         """
         df.seek(0)
-        temp_mod_name = os.path.split(self.full_filename)[-1].rsplit('.', 1)[0]
-        finding_main_cat = True
-        reading_comments = False
-        cat_re = re.compile('#<(.*?)>')
+        cur_section = []
+        found_raw_comment = False
         for line in df.readlines():
-            if finding_main_cat:
-                if self.re.search(cat_re, line):
-                    self.mod_title = self.re.last_match.group(1).strip()
-                    if self.mod_title.lower() == 'patch' or self.mod_title.lower() == 'mod':
-                        self.mod_title = temp_mod_name
-                    finding_main_cat = False
-            else:
-                stripped = line.strip()
-                if '#<hotfix>' not in line and self.re.search(cat_re, line):
-                    # Unlike the BLCMM processing, at the moment, we're not allowing
-                    # comments after nested categories, though we *are* if there's
-                    # a "description" folder, since that's a real common way that
-                    # FT files get laid out.
-                    if 'description' not in self.re.last_match.group(1).lower():
-                        return
-                elif stripped.startswith('set '):
-                    return
-                elif stripped.startswith('#<hotfix>'):
-                    return
-                elif stripped != '':
-                    self.add_comment_line(line)
-
-    def load_unknown(self, df):
-        """
-        Loads in a presumably freeform-text mod.  Mostly just assume everything up to
-        the first `set` statement is a comment, I guess.  Initially take the filename
-        (minus extension) to be the mod name, but if the first comment line we
-        find happens to match close enough to the filename, we'll use that for the 
-        title instead.
-        """
-        temp_mod_name = os.path.split(self.full_filename)[-1].rsplit('.', 1)[0]
-        df.seek(0)
-        for line in df.readlines():
-            if line.strip().startswith('set ') or line.strip().startswith('#<'):
+            # If we get to a `Spark` line, break
+            if line.startswith('Spark'):
                 break
+
+            stripped = line.strip()
+            if stripped == '':
+                # Found an empty line
+                if found_raw_comment and cur_section:
+                    # If we're reading "raw" comments and have been reading in
+                    # a comment section, append it to our full description
+                    self.add_comment_line('')
+                    for line in cur_section:
+                        self.add_comment_line(line)
+                    cur_section = []
             else:
-                self.add_comment_line(line, match_title=temp_mod_name)
+                # I guess let's not actually care if comments have hashes or not.
+                # My hfinject.py probably complains and refuses to load the mod if
+                # a "bare" comment is specified, but other processors might not, and
+                # in the end, who cares?
+                if stripped.startswith('#'):
+                    stripped = stripped.lstrip('#')
+                    # Only strip a single space char after hashes, in case the in-mod
+                    # description is using some indents
+                    if stripped[0] == ' ':
+                        stripped = stripped[1:]
+
+                if found_raw_comment:
+                    cur_section.append(stripped)
+                else:
+                    if ': ' in stripped:
+                        key, val = stripped.split(': ')
+                        key = key.strip().lower()
+                        val = val.strip()
+                        if key == 'name':
+                            self.mod_title = val
+                        elif key == 'author':
+                            # Ignoring this; we actually take it from the directory
+                            pass
+                        elif key == 'version':
+                            self.version = val
+                        elif key == 'categories':
+                            for cat in [c.strip().lower() for c in val.split(',')]:
+                                if cat in self.valid_categories:
+                                    self.categories.add(cat)
+                                else:
+                                    self.errors = True
+                                    self.error_list.append('WARNING: Invalid category "{}" in `{}`'.format(
+                                        cat,
+                                        self.rel_filename,
+                                        ))
+                        elif key == 'license':
+                            self.license = val
+                        elif key == 'license url':
+                            self.license_url = val
+                        elif key == 'screenshot':
+                            self.screenshots.append(val)
+                        elif key == 'video':
+                            self.video_urls.append(val)
+                        elif key == 'nexus':
+                            self.nexus_link = val
+                        elif key == 'url':
+                            self.urls.append(val)
+                        else:
+                            self.errors = True
+                            self.error_list.append('WARNING: Unknown key in "{} in `{}`'.format(
+                                key,
+                                self.rel_filename,
+                                ))
+                    elif stripped != '':
+                        # Okay, we got something that wasn't a `Key: Value` type thing, so
+                        # let's just assume we're processing comments now.
+                        cur_section.append(stripped)
+                        found_raw_comment = True
+
         if not self.mod_title:
-            self.mod_title = temp_mod_name
+            raise NotAModFile('No mod title found')
+        if not self.categories:
+            raise NotAModFile('No categories found')
 
-        # Some really-badly-formatted files are nearly FT-compatible but
-        # are missing the hash mark in front of the XMLish stuff.  Check
-        # to see if our name happens to be enclosed in angle-brackets, and
-        # strip them out if so.
-        if self.mod_title[0] == '<' and self.mod_title[-1] == '>':
-            self.mod_title = self.mod_title[1:-1]
-
-    def add_comment_line(self, comment_line, match_title=None):
+    def add_comment_line(self, comment_line):
         """
         Adds a comment line to our description, attempting to strip out some common
-        comment prefixes and do some general data massaging.  If `match_title` isn'
-        `None`, and this is the first comment line to be inserted, check to see if
-        the line is similar to the given title, and set the mod title to be that
-        comment line.
+        comment prefixes and do some general data massaging.
         """
 
         # Take off any whitespace and comment characters
-        line = comment_line.strip("/#\n\r\t ")
+        # (this should already be done)
+        #line = comment_line.strip("/#\n\r\t ")
         
         # Prevent adding an empty line at the beginning
         if line == '' and len(self.mod_desc) == 0:
@@ -708,15 +703,9 @@ class ModFile(Cacheable):
             return
 
         # Attempt to prevent adding in header ASCII art
-        if len(self.mod_desc) == 0 and line.strip("[]_/\\.:|#~ \t") == '':
-            return
-
-        # Attempt to match on a title, if we can (and return without adding,
-        # if that's the case)
-        if not self.mod_title and match_title and len(self.mod_desc) == 0:
-            if Levenshtein.ratio(match_title.lower(), line.lower()) > .8:
-                self.mod_title = line
-                return
+        # (I don't actually expect much of this, but we'll see)
+        #if len(self.mod_desc) == 0 and line.strip("[]_/\\.:|#~ \t") == '':
+        #    return
 
         # Finally, add it in.
         self.mod_desc.append(line)
@@ -990,7 +979,11 @@ class FileCache(object):
                 initial_status = Cacheable.S_NEW
             else:
                 initial_status = Cacheable.S_UPDATED
-            self.mapping[full_filename] = self.cache_class(mtime, dirinfo, filename, initial_status, **extra)
+            try:
+                self.mapping[full_filename] = self.cache_class(mtime, dirinfo, filename, initial_status, **extra)
+            except NotAModFile:
+                # Eh, whatever
+                pass
         return self.mapping[full_filename]
 
     def items(self):
@@ -1040,222 +1033,6 @@ class FileCache(object):
         Convenience function to be able to use this sort of like a dict
         """
         return len(self.mapping)
-
-class CabinetModInfo(object):
-    """
-    A little class to hold info about a single mod definition inside
-    a `cabinet.info` file.  Just a glorified dictionary, really.  I'd
-    use a namedtuple, but we need to be able to dynamically add to
-    the 'urls' array
-    """
-
-    def __init__(self, filename, categories):
-        self.filename = filename
-        self.categories = categories
-        self.urls = []
-    
-    def add_url(self, url):
-        self.urls.append(url)
-
-    def serialize(self):
-        """
-        Returns a dict which describes this entry
-        """
-        return {
-                'f': self.filename,
-                'c': self.categories,
-                'u': self.urls,
-                }
-
-    def unserialize(self, input_dict):
-        """
-        Unserialize ourselves from an input dictionary
-        """
-        self.filename = input_dict['f']
-        self.categories = input_dict['c']
-        self.urls = input_dict['u']
-
-class CabinetInfo(Cacheable):
-    """
-    Simple little class to read in and parse our `cabinet.info` files
-    """
-
-    cache_key = 'info'
-
-    def __init__(self, mtime, dirinfo=None, filename=None, initial_status=Cacheable.S_UNKNOWN,
-            rel_filename=None, error_list=None, valid_categories=None):
-        """
-        Initialize with the given `mtime` and a bunch of other optional info.  In
-        general this will only really be called from the `FileCache` class, when
-        it encounters a situation where a newer (or just new) file is found on
-        disk.  To initialize an object just for testing, all that's needed is `mtime`.
-        Optionally, though, pass in:
-            `dirinfo` - A DirInfo object describing the directory we're found in
-            `filename` - Our filename (without path)
-            `initial_status` - Our initial cache status
-            `rel_filename` - The relative filename to report to the user in errors
-            `error_list` - An array we can append load errors to
-            `valid_categories` - A dict describing the valid categories which can be
-                found in the info file
-        """
-        super().__init__(mtime, initial_status)
-        self.rel_filename = None
-        self.error_list = None
-        self.valid_categories = None
-        self.mods = {}
-        self.single_mod = False
-        self.errors = False
-        if rel_filename:
-            full_filename = dirinfo[filename]
-            self.load_from_filename(full_filename, rel_filename, error_list, valid_categories)
-
-    def has_errors(self):
-        """
-        Return whether or not we have errors
-        """
-        return self.errors
-
-    def _serialize(self):
-        """
-        Returns a serializable dict describing ourselves
-        """
-        return {
-                'r': self.rel_filename,
-                's': self.single_mod,
-                'o': dict([(k, v.serialize()) for k, v in self.mods.items()]),
-                }
-
-    def _unserialize(self, input_dict):
-        """
-        Populates ourself given the specified serialized dict
-        """
-        self.rel_filename = input_dict['r']
-        self.single_mod = input_dict['s']
-        self.mods = {}
-        for k, mod_dict in input_dict['o'].items():
-            # 'null' is usually converted automatically to None when loading
-            # JSON, but JSON dicts can't have null as the key, so it becomes
-            # a string rather than a keyword, and we have to check for it.
-            if k == 'null':
-                k = None
-            self.mods[k] = CabinetModInfo(None, [])
-            self.mods[k].unserialize(mod_dict)
-
-    def load_from_filename(self, filename, rel_filename, error_list, valid_categories):
-        """
-        Load from the given filename
-        """
-        with open(filename) as df:
-            self.load_from_file(df, rel_filename, error_list, valid_categories)
-
-    def load_from_file(self, df, rel_filename, error_list, valid_categories):
-        """
-        Loads our information from the given `filename`.  `rel_filename` will
-        be the filename reported in errors, if we run into any, and should have
-        any unneeded prefixes already shaved off.
-        """
-        prev_modfile = None
-        single_mod = False
-
-        self.rel_filename = rel_filename
-        self.error_list = error_list
-        self.valid_categories = valid_categories
-
-        # Now read cabinet.info to find mod files
-        for line in df.readlines():
-            if line.strip() == '' or line.startswith('#'):
-                pass
-            elif line.startswith('http://') or line.startswith('https://') or '|http' in line:
-                if prev_modfile in self.mods:
-                    self.mods[prev_modfile].add_url(line.strip())
-                else:
-                    self.errors = True
-                    self.error_list.append('ERROR: Did not find previous modfile but got URL, in `{}`'.format(
-                        self.rel_filename))
-            else:
-                if ': ' in line:
-                    if self.single_mod:
-                        self.errors = True
-                        self.error_list.append('ERROR: Unknown line "{}" found in single-mod info file `{}`'.format(
-                            line.strip(), self.rel_filename))
-                    else:
-                        if line[0] == '\\':
-                            line = line[1:]
-                        (mod_filename, mod_categories) = line.split(': ', 1)
-                        if self.register(mod_filename, mod_categories):
-                            prev_modfile = mod_filename
-                else:
-                    if len(self.mods) > 0:
-                        self.errors = True
-                        self.error_list.append('ERROR: Unknown line "{}" inside `{}`'.format(
-                            line.strip(), self.rel_filename))
-                    else:
-                        self.single_mod = True
-                        if self.register(None, line.strip()):
-                            prev_modfile = None
-
-    def register(self, mod_name, mod_categories):
-        """
-        Registers a mod line that we've found in a `cabinet.info` file.
-        Will double-check against the list of valid categories and return
-        False if the mod was not registered.
-        """
-
-        # First check to make sure we don't already have this mod
-        if mod_name in self.mods:
-            self.errors = True
-            self.error_list.append('ERROR: {} specified twice inside `{}`'.format(
-                mod_name, self.rel_filename))
-            return False
-
-        # Split up the category list and assign it
-        real_cats = []
-        cats = [c.strip() for c in mod_categories.lower().split(',')]
-        for cat in cats:
-            if cat in self.valid_categories:
-                real_cats.append(cat)
-            else:
-                self.errors = True
-                self.error_list.append('WARNING: Invalid category "{}" in `{}`'.format(
-                    cat, self.rel_filename,
-                    ))
-
-        # If we have categories which are valid, continue!
-        if len(real_cats) > 0:
-            self.mods[mod_name] = CabinetModInfo(mod_name, real_cats)
-            return True
-        else:
-            if mod_name:
-                report = mod_name
-            else:
-                report = 'the mod'
-            self.errors = True
-            self.error_list.append('ERROR: No categories found for {} in `{}`'.format(report, self.rel_filename))
-            return False
-
-    def modlist(self):
-        """
-        Returns our list if CabinetModInfo objects
-        """
-        return self.mods.values()
-
-    def __getitem__(self, key):
-        """
-        Convenience function to be able to use this sort of like a dict
-        """
-        return self.mods[key]
-
-    def __contains__(self, key):
-        """
-        Convenience function to be able to use this sort of like a dict
-        """
-        return key in self.mods
-
-    def __len__(self):
-        """
-        Convenience function to be able to use this sort of like a dict
-        """
-        return len(self.mods)
 
 def wiki_filename(page_title, with_ext=True):
     """
@@ -1335,9 +1112,9 @@ class Category(object):
             self.prefix = None
             self.title = title
 
-    def wiki_filename(self, game):
+    def wiki_filename(self):
         global wiki_filename
-        return wiki_filename('{} {}'.format(game.abbreviation, self.full_title))
+        return wiki_filename(self.full_title)
 
     def wiki_link(self, game):
         global wiki_link_html
@@ -1356,9 +1133,8 @@ class Game(object):
     glorified dict.
     """
 
-    def __init__(self, abbreviation, dir_name, title):
+    def __init__(self, abbreviation, title):
         self.abbreviation = abbreviation
-        self.dir_name = dir_name
         self.title = title
 
     def wiki_filename(self):
@@ -1374,12 +1150,6 @@ class App(object):
     Main app
     """
 
-    # Games that we support
-    games = collections.OrderedDict([
-            ('BL2', Game('BL2', 'Borderlands 2 mods', 'Borderlands 2')),
-            ('TPS', Game('TPS', 'Pre Sequel Mods', 'Pre-Sequel')),
-            ])
-
     # Valid Categories
     categories = collections.OrderedDict([
 
@@ -1389,44 +1159,37 @@ class App(object):
         # General Gameplay and Balance
         ('mode-balance', Category('General Gameplay and Balance: Game Mode Balance')),
         ('scaling', Category('General Gameplay and Balance: Scaling Changes')),
+        ('mayhem', Category('General Gameplay and Balance: Mayhem Mode Changes')),
         ('element', Category('General Gameplay and Balance: Elements and Damage Types')),
         ('quest-changes', Category('General Gameplay and Balance: Quest Changes')),
-        ('currency', Category('General Gameplay and Balance: Currencies')),
+        ('economy', Category('General Gameplay and Balance: Economy Changes')),
+        ('event', Category('General Gameplay and Balance: Timed Event Changes')),
         ('gameplay', Category('General Gameplay and Balance: Other Gameplay Changes')),
 
         # Characters and Skills
         ('char-overhaul', Category('Characters and Skills: Full Character Overhauls')),
         ('skill-system', Category('Characters and Skills: Skill System Changes')),
-        ('char-axton', Category('Characters and Skills: Axton Changes')),
-        ('char-gaige', Category('Characters and Skills: Gaige Changes')),
-        ('char-krieg', Category('Characters and Skills: Krieg Changes')),
-        ('char-maya', Category('Characters and Skills: Maya Changes')),
-        ('char-sal', Category('Characters and Skills: Salvador Changes')),
-        ('char-zero', Category('Characters and Skills: Zer0 Changes')),
-        ('char-athena', Category('Characters and Skills: Athena Changes')),
-        ('char-aurelia', Category('Characters and Skills: Aurelia Changes')),
-        ('char-claptrap', Category('Characters and Skills: Claptrap Changes')),
-        ('char-jack', Category('Characters and Skills: Jack Changes')),
-        ('char-nisha', Category('Characters and Skills: Nisha Changes')),
-        ('char-wilhelm', Category('Characters and Skills: Wilhelm Changes')),
+        ('char-beastmaster', Category('Characters and Skills: Beastmaster Changes')),
+        ('char-gunner', Category('Characters and Skills: Gunner Changes')),
+        ('char-operative', Category('Characters and Skills: Operative Changes')),
+        ('char-siren', Category('Characters and Skills: Siren Changes')),
         ('char-other', Category('Characters and Skills: Other Character Changes')),
 
         # Weapons/Gear
         ('gear-general', Category('Weapons/Gear: General')),
+		('gear-anointments', Category('Weapons/Gear: Anointments')),
         ('gear-brand', Category('Weapons/Gear: Brand Overhauls')),
         ('gear-pack', Category('Weapons/Gear: Packs')),
         ('gear-ar', Category('Weapons/Gear: Assault Rifles')),
-        ('gear-laser', Category('Weapons/Gear: Lasers')),
         ('gear-pistol', Category('Weapons/Gear: Pistols')),
-        ('gear-launcher', Category('Weapons/Gear: Rocket Launchers')),
+        ('gear-heavy', Category('Weapons/Gear: Heavy Weapons')),
         ('gear-shotgun', Category('Weapons/Gear: Shotguns')),
         ('gear-smg', Category('Weapons/Gear: SMGs')),
         ('gear-sniper', Category('Weapons/Gear: Sniper Rifles')),
         ('gear-grenade', Category('Weapons/Gear: Grenade Mods')),
         ('gear-com', Category('Weapons/Gear: COMs')),
         ('gear-shield', Category('Weapons/Gear: Shields')),
-        ('gear-relic', Category('Weapons/Gear: Relics')),
-        ('gear-ozkit', Category('Weapons/Gear: Oz Kits')),
+        ('gear-artifact', Category('Weapons/Gear: Artifacts')),
 
         # Farming and Looting
         ('loot-system', Category('Farming and Looting: Loot System Overhauls')),
@@ -1485,7 +1248,6 @@ class App(object):
         self.cache_dir = self.config['cache']['cache_dir']
         self.cache_filename = os.path.join(self.cache_dir, 'modcache.json.xz')
         self.readme_cache_filename = os.path.join(self.cache_dir, 'readmecache.json.xz')
-        self.info_cache_filename = os.path.join(self.cache_dir, 'infocache.json.xz')
         self.author_cache_filename = os.path.join(self.cache_dir, 'authorcache.json.xz')
         self.templatemtime_cache_filename = os.path.join(self.cache_dir, 'templatemtime.json.xz')
         self.log_dir = self.config['logging']['log_dir']
@@ -1543,7 +1305,6 @@ class App(object):
             self.logger.info('Skipping cache loading')
         self.mod_cache = FileCache(ModFile, self.cache_filename, do_load=load_cache)
         self.readme_cache = FileCache(Readme, self.readme_cache_filename, do_load=load_cache)
-        self.info_cache = FileCache(CabinetInfo, self.info_cache_filename, do_load=load_cache)
         self.author_cache = FileCache(Author, self.author_cache_filename, do_load=load_cache)
         self.templatemtime_cache = FileCache(TemplateMTime, self.templatemtime_cache_filename, do_load=load_cache)
         self.error_list = []
@@ -1593,8 +1354,6 @@ class App(object):
 
         # Keep track of which categories we've seen
         seen_cats = {}
-        for game in self.games.values():
-            seen_cats[game.abbreviation] = {}
 
         # Set up a reserved and created pages set
         status_filename = 'Wiki-Status.md'
@@ -1613,10 +1372,9 @@ class App(object):
                 static_pages[filename] = df.read()
 
         # Add all game/category pages to our reserved_pages list
-        for game in self.games.values():
-            reserved_pages.add(game.wiki_filename())
-            for cat in self.categories.values():
-                reserved_pages.add(cat.wiki_filename(game))
+        reserved_pages.add('Borderlands 3 Mods')
+        for cat in self.categories.values():
+            reserved_pages.add(cat.wiki_filename())
 
         # Pull down the latest repo
         if do_git:
@@ -1639,105 +1397,69 @@ class App(object):
         # Loop through our game dirs
         self.logger.debug('Beginning walkthrough of repo directory')
         name_resolution = {}
-        for game in self.games.values():
-            game_dir = os.path.join(self.repo_dir, game.dir_name)
-            for (dirpath, dirnames, filenames) in os.walk(game_dir):
 
-                # Make a mapping of files by lower-case, so that we can
-                # match case-insensitively
-                dirinfo = DirInfo(self.repo_dir, dirpath, filenames)
+        game_dir = self.repo_dir
+        for (dirpath, dirnames, filenames) in os.walk(game_dir):
 
-                # Read our info file, if we have it.
-                if 'cabinet.info' in dirinfo:
+            # Make a mapping of files by lower-case, so that we can
+            # match case-insensitively
+            dirinfo = DirInfo(self.repo_dir, dirpath, filenames)
 
-                    # Load in readme info, if we can.
-                    readme = None
-                    if dirinfo.readme:
-                        readme = self.readme_cache.load(dirinfo, dirinfo.readme)
+            # Load in readme info, if we can.
+            readme = None
+            if dirinfo.readme:
+                readme = self.readme_cache.load(dirinfo, dirinfo.readme)
 
-                    # Read the file info
-                    cabinet_filename = dirinfo['cabinet.info']
-                    rel_cabinet_filename = cabinet_filename[len(self.repo_dir)+1:]
-                    cabinet_info = self.info_cache.load(dirinfo, 'cabinet.info',
-                            rel_filename=rel_cabinet_filename,
+            # Loop through the mods found in the dir and load 'em, if we can
+            processed_files = []
+            for txt_file in dirinfo.get_all_with_ext('txt'):
+                if 'readme' not in txt_file.lower():
+                    try:
+                        processed_files.append(self.mod_cache.load(dirinfo, txt_file,
                             error_list=self.error_list,
                             valid_categories=self.categories,
-                            )
+                            ))
+                    except NotAModFile:
+                        # Whatever, if we're processing *.txt we're bound to have this pop up.
+                        pass
 
-                    # Loop through the mods described by cabinet.info and load them
-                    processed_files = []
-                    if cabinet_info.single_mod:
-                        # Make sure that a valid category was found
-                        if None in cabinet_info.mods:
-                            cabinet_info_mod = cabinet_info.mods[None]
-                            # Scan for which file to use -- just a single mod file in
-                            # this dir.  First look for .blcm files.
-                            for blcm_file in dirinfo.get_all_with_ext('blcm'):
-                                processed_files.append((cabinet_info_mod, self.mod_cache.load(dirinfo, blcm_file, game=game.abbreviation)))
-                                # We're just going to always take the very first .blcm file we find
-                                break
-                            if len(processed_files) == 0:
-                                for txt_file in dirinfo.get_all_with_ext('txt'):
-                                    if 'readme' not in txt_file.lower():
-                                        processed_files.append((cabinet_info_mod, self.mod_cache.load(dirinfo, txt_file, game=game.abbreviation)))
-                                        # Again, just grab the first one
-                                        break
-                            if len(processed_files) == 0:
-                                for random_file in dirinfo.get_all():
-                                    if 'readme' not in random_file.lower() and 'changelog' not in random_file.lower() and 'cabinet.info' not in random_file.lower():
-                                        processed_files.append((cabinet_info_mod, self.mod_cache.load(dirinfo, random_file, game=game.abbreviation)))
-                                        # Again, just grab the first one
-                                        break
-                    else:
-                        for cabinet_info_mod in cabinet_info.modlist():
-                            try:
-                                processed_files.append((cabinet_info_mod, self.mod_cache.load(dirinfo, cabinet_info_mod.filename, game=game.abbreviation)))
-                            except KeyError:
-                                self.error_list.append('ERROR: Invalid modfile `{}` specified in `{}`'.format(
-                                    cabinet_info_mod.filename,
-                                    rel_cabinet_filename,
-                                    ))
+            # If we only processed a single mod, then it's a single-mod dir
+            if len(processed_files) == 1:
+                single_mod = True
+            else:
+                single_mod = False
 
-                    # Do Stuff with each file we got
-                    for (cabinet_info_mod, processed_file) in processed_files:
+            # Do Stuff with each file we got
+            for processed_file in processed_files:
 
-                        # See if we've got a "better" description in a readme
-                        if readme:
-                            readme_info = readme.find_matching(processed_file.mod_title, cabinet_info.single_mod)
-                            if cabinet_info.single_mod:
-                                changelog = readme.find_matching('changelog', False)
-                            else:
-                                changelog = []
-                        else:
-                            readme_info = []
-                            changelog = []
-                        processed_file.update_readme_desc(readme, readme_info)
-                        processed_file.update_changelog(changelog)
+                # See if we've got a "better" description in a readme
+                if readme:
+                    readme_info = readme.find_matching(processed_file.mod_title, single_mod)
+                    changelog = readme.find_matching('changelog', False)
+                else:
+                    readme_info = []
+                    changelog = []
+                processed_file.update_readme_desc(readme, readme_info)
+                processed_file.update_changelog(changelog)
 
-                        # Set our categories (if we'd read from cache, they may have changed)
-                        processed_file.set_categories(cabinet_info_mod.categories)
-                        for cat in cabinet_info_mod.categories:
-                            if cat not in seen_cats[game.abbreviation]:
-                                seen_cats[game.abbreviation][cat] = []
-                            seen_cats[game.abbreviation][cat].append(processed_file)
+                # Make sure that `seen_cats` is up to date
+                for cat in processed_file.categories:
+                    if cat not in seen_cats:
+                        seen_cats[cat] = []
+                    seen_cats[cat].append(processed_file)
 
-                        # Set our URLs (likewise, if from cache then they may have changed)
-                        processed_file.set_urls(cabinet_info_mod.urls)
+                # Previously we were adding mods to our author cache here, but we need
+                # to wait until we resolve any potential mod name conflicts first, so
+                # that's now happening later...
 
-                        # Previously we were adding mods to our author cache here, but we need
-                        # to wait until we resolve any potential mod name conflicts first, so
-                        # that's now happening later...
-
-                        # Add to our name_resolution object for later processing
-                        title_lower = processed_file.mod_title.lower()
-                        if title_lower not in name_resolution:
-                            name_resolution[title_lower] = {}
-                        if game not in name_resolution[title_lower]:
-                            name_resolution[title_lower][game] = {}
-                        author_lower = processed_file.mod_author.lower()
-                        if author_lower not in name_resolution[title_lower][game]:
-                            name_resolution[title_lower][game][author_lower] = {}
-                        name_resolution[title_lower][game][author_lower][processed_file.rel_filename] = processed_file.full_filename
+                # Add to our name_resolution object for later processing
+                title_lower = processed_file.mod_title.lower()
+                if title_lower not in name_resolution:
+                    name_resolution[title_lower] = {}
+                author_lower = processed_file.mod_author.lower()
+                if author_lower not in name_resolution[title_lower]:
+                    name_resolution[title_lower][author_lower] = {}
+                name_resolution[title_lower][author_lower][processed_file.rel_filename] = processed_file.full_filename
 
         # Report that we're done
         self.logger.debug('Finished looping through mods directory')
@@ -1795,65 +1517,57 @@ class App(object):
         # boundaries.  Note that this needs to happen *before* any categories or
         # author pages are written out.
         self.logger.debug('Resolving mod name conflicts')
-        for (mod_title, mod_games) in name_resolution.items():
+        for (mod_title, mod_authors) in name_resolution.items():
             shared_set = set()
-            need_game = (len(mod_games) > 1)
-            for (game, mod_authors) in mod_games.items():
-                if need_game:
-                    game_suffix = ' - {}'.format(game.abbreviation)
-                else:
-                    game_suffix = ''
-                need_author = (len(mod_authors) > 1)
-                for (author_name, mod_files) in mod_authors.items():
-                    need_filename = (len(mod_files) > 1)
-                    for (mod_filename, mod_full_filename) in mod_files.items():
-                        if mod_full_filename in self.mod_cache:
-                            mod_obj = self.mod_cache[mod_full_filename]
+            need_author = (len(mod_authors) > 1)
+            for (author_name, mod_files) in mod_authors.items():
+                need_filename = (len(mod_files) > 1)
+                for (mod_filename, mod_full_filename) in mod_files.items():
+                    if mod_full_filename in self.mod_cache:
+                        mod_obj = self.mod_cache[mod_full_filename]
 
-                            # Filename suffix
-                            if need_filename:
-                                filename_suffix = ' (from {})'.format(mod_filename)
-                            else:
-                                filename_suffix = ''
+                        # Filename suffix
+                        if need_filename:
+                            filename_suffix = ' (from {})'.format(mod_filename)
+                        else:
+                            filename_suffix = ''
 
-                            # Construct author suffix.  We don't do this until now because
-                            # our name_resolution dict is all lowercase, which may not be
-                            # appropriate.
-                            if need_author:
-                                author_suffix = ' by {}'.format(mod_obj.mod_author)
-                            else:
-                                author_suffix = ''
+                        # Construct author suffix.  We don't do this until now because
+                        # our name_resolution dict is all lowercase, which may not be
+                        # appropriate.
+                        if need_author:
+                            author_suffix = ' by {}'.format(mod_obj.mod_author)
+                        else:
+                            author_suffix = ''
 
-                            # Construct wiki filename and display title
-                            new_filename = '{}{}{}{}'.format(
-                                    mod_obj.mod_title,
-                                    filename_suffix,
-                                    author_suffix,
-                                    game_suffix,
-                                    )
-                            new_title_display = '{}{}{}'.format(
-                                    mod_obj.mod_title,
-                                    filename_suffix,
-                                    game_suffix,
-                                    )
+                        # Construct wiki filename and display title
+                        new_filename = '{}{}{}'.format(
+                                mod_obj.mod_title,
+                                filename_suffix,
+                                author_suffix,
+                                )
+                        new_title_display = '{}{}'.format(
+                                mod_obj.mod_title,
+                                filename_suffix,
+                                )
 
-                            # This is kind of ridiculous, but it happens once; doublecheck
-                            # to see if the filename conflicts with an author filename.
-                            if new_filename in author_names:
-                                new_filename = '{} by {}'.format(new_filename, author_name)
+                        # This is kind of ridiculous, but it happens once; doublecheck
+                        # to see if the filename conflicts with an author filename.
+                        if new_filename in author_names:
+                            new_filename = '{} by {}'.format(new_filename, author_name)
 
-                            # Now set our information
-                            mod_obj.set_wiki_filename_base(new_filename)
-                            mod_obj.set_title_display(new_title_display)
-                            shared_set.add(mod_obj)
+                        # Now set our information
+                        mod_obj.set_wiki_filename_base(new_filename)
+                        mod_obj.set_title_display(new_title_display)
+                        shared_set.add(mod_obj)
 
-                            # Add this mod to an author obj
-                            if mod_obj.mod_author:
-                                if mod_obj.mod_author not in self.author_cache:
-                                    self.author_cache[mod_obj.mod_author] = Author(0,
-                                            initial_status=Author.S_NEW,
-                                            name=mod_obj.mod_author)
-                                self.author_cache[mod_obj.mod_author].add_mod(mod_obj)
+                        # Add this mod to an author obj
+                        if mod_obj.mod_author:
+                            if mod_obj.mod_author not in self.author_cache:
+                                self.author_cache[mod_obj.mod_author] = Author(0,
+                                        initial_status=Author.S_NEW,
+                                        name=mod_obj.mod_author)
+                            self.author_cache[mod_obj.mod_author].add_mod(mod_obj)
 
             # Now, have each of the mods with a shared name link over to each other.
             for mod_obj in shared_set:
@@ -1886,34 +1600,29 @@ class App(object):
 
         # Write out game and category pages
         self.logger.debug('Writing out game and category pages')
-        multi_game_cats = {}
-        for game in self.games.values():
-            game_cats = []
-            multi_game_cats[game.abbreviation] = game_cats
-            for (cat_key, cat) in self.categories.items():
-                if cat_key in seen_cats[game.abbreviation]:
-                    game_cats.append(cat)
+        game_cats = []
+        for (cat_key, cat) in self.categories.items():
+            if cat_key in seen_cats:
+                game_cats.append(cat)
 
-                    # Write out the category page
-                    cat_filename = cat.wiki_filename(game)
-                    created_pages.add(cat_filename)
-                    self.write_wiki_file(wiki_files,
-                            cat_filename,
-                            self.cat_template.render({
-                                'game': game,
-                                'cat': cat,
-                                'mods': sorted(seen_cats[game.abbreviation][cat_key]),
-                                'authors': self.author_cache,
-                                }),
-                            )
+                # Write out the category page
+                cat_filename = cat.wiki_filename()
+                created_pages.add(cat_filename)
+                self.write_wiki_file(wiki_files,
+                        cat_filename,
+                        self.cat_template.render({
+                            'cat': cat,
+                            'mods': sorted(seen_cats[cat_key]),
+                            'authors': self.author_cache,
+                            }),
+                        )
 
             # Write out the game page, linking to all categories which have mods
-            game_filename = game.wiki_filename()
+            game_filename = 'Borderlands 3 Mods'
             created_pages.add(game_filename)
             self.write_wiki_file(wiki_files,
                     game_filename,
                     self.game_template.render({
-                        'game': game,
                         'categories': game_cats,
                         })
                     )
@@ -1923,9 +1632,8 @@ class App(object):
         self.write_wiki_file(wiki_files,
                 sidebar_filename,
                 self.sidebar_template.render({
-                    'games': self.games.values(),
                     'cats': self.categories,
-                    'seen_cats': multi_game_cats,
+                    'seen_cats': game_cats,
                     })
                 )
 
@@ -1963,7 +1671,6 @@ class App(object):
                     with open(full_author, 'w') as df:
                         df.write(self.author_template.render({
                             'author': author,
-                            'games': self.games,
                             'base_url': self.base_url,
                             }))
 
