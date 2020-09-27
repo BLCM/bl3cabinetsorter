@@ -641,11 +641,11 @@ class ModFile(Cacheable):
                         if key == 'name':
                             if not self.mod_title:
                                 self.mod_title = val
+                            else:
+                                self.errors = True
                                 self.error_list.append('WARNING: More than one mod name specified in `{}`'.format(
                                     self.rel_filename,
                                     ))
-                            else:
-                                self.errors = True
                         elif key == 'author':
                             # Ignoring this; we actually take it from the directory
                             pass
@@ -715,7 +715,7 @@ class ModFile(Cacheable):
         if not self.categories:
             raise NotAModFile('No categories found')
 
-    def add_comment_line(self, comment_line):
+    def add_comment_line(self, line):
         """
         Adds a comment line to our description, attempting to strip out some common
         comment prefixes and do some general data massaging.

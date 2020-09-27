@@ -33,7 +33,7 @@ class ModFileTextHotfixesTests(unittest.TestCase):
     valid_categories = {
             'qol': 'Quality of Life',
             'scaling': 'Scaling',
-            'char-gunner', 'Gunner',
+            'char-gunner': 'Gunner',
             }
 
     def setUp(self):
@@ -61,12 +61,12 @@ class ModFileTextHotfixesTests(unittest.TestCase):
         self.set_df_contents([], do_contents=False)
         with self.assertRaises(NotAModFile) as cm:
             self.modfile.load_text_hotfixes(self.df)
-        self.assertIn('Empty file', str(cm.exception))
+        self.assertIn('No mod title', str(cm.exception))
 
     def test_load_only_comments(self):
         self.set_df_contents([
             '# Testing',
-            ], do_cotents=False)
+            ], do_contents=False)
         with self.assertRaises(NotAModFile) as cm:
             self.modfile.load_text_hotfixes(self.df)
         self.assertIn('No mod title', str(cm.exception))
@@ -130,6 +130,43 @@ class ModFileTextHotfixesTests(unittest.TestCase):
             '# Nexus: https://www.nexusmods.com/borderlands3/mods/128',
             '# URL: https://borderlands.com/en-US/news/2020-09-10-borderlands-3-patch-hotfixes-sept-10/',
             '# URL: https://borderlands.com/en-US/news/2020-09-17-borderlands-3-hotfixes-sept-17/',
+            ])
+        self.modfile.load_text_hotfixes(self.df)
+        self.assertEqual(self.modfile.mod_title, 'Mod Name')
+        self.assertEqual(self.modfile.categories, set(['qol']))
+        self.assertEqual(self.modfile.version, '1.0.0')
+        self.assertEqual(self.modfile.license, 'Public Domain')
+        self.assertEqual(self.modfile.license_url, 'https://creativecommons.org/share-your-work/public-domain/')
+        self.assertEqual(set(self.modfile.screenshots), set([
+            'https://i.imgur.com/ClUttYw.gif',
+            'https://i.imgur.com/W5BHeOB.jpg',
+            ]))
+        self.assertEqual(set(self.modfile.video_urls), set([
+            'https://www.youtube.com/watch?v=JiEu23G4onM',
+            'https://www.youtube.com/watch?v=d9Gu1PspA3Y',
+            ]))
+        self.assertEqual(set(self.modfile.urls), set([
+            'https://borderlands.com/en-US/news/2020-09-10-borderlands-3-patch-hotfixes-sept-10/',
+            'https://borderlands.com/en-US/news/2020-09-17-borderlands-3-hotfixes-sept-17/',
+            ]))
+        self.assertEqual(self.modfile.nexus_link, 'https://www.nexusmods.com/borderlands3/mods/128')
+        self.assertFalse(self.modfile.has_errors())
+
+    def test_load_full_headers_multiple_hashes(self):
+        self.set_df_contents([
+            '### Name: Mod Name',
+            '### Version: 1.0.0',
+            '### Categories: qol',
+            '### Author: Apocalyptech',
+            '### License: Public Domain',
+            '### License URL: https://creativecommons.org/share-your-work/public-domain/',
+            '### Screenshot: https://i.imgur.com/ClUttYw.gif',
+            '### Screenshot: https://i.imgur.com/W5BHeOB.jpg',
+            '### Video: https://www.youtube.com/watch?v=JiEu23G4onM',
+            '### Video: https://www.youtube.com/watch?v=d9Gu1PspA3Y',
+            '### Nexus: https://www.nexusmods.com/borderlands3/mods/128',
+            '### URL: https://borderlands.com/en-US/news/2020-09-10-borderlands-3-patch-hotfixes-sept-10/',
+            '### URL: https://borderlands.com/en-US/news/2020-09-17-borderlands-3-hotfixes-sept-17/',
             ])
         self.modfile.load_text_hotfixes(self.df)
         self.assertEqual(self.modfile.mod_title, 'Mod Name')
@@ -232,7 +269,8 @@ class ModFileTextHotfixesTests(unittest.TestCase):
             '# Name: Mod Name 2',
             '# Categories: qol',
             ])
-        self.assertEqual(self.modfile.name, 'Mod Name')
+        self.modfile.load_text_hotfixes(self.df)
+        self.assertEqual(self.modfile.mod_title, 'Mod Name')
         self.assertTrue(self.modfile.has_errors())
         self.assertIn('More than one mod name', self.errors[0])
 
@@ -243,6 +281,7 @@ class ModFileTextHotfixesTests(unittest.TestCase):
             '# Version: 1.0.0',
             '# Version: 2.0.0',
             ])
+        self.modfile.load_text_hotfixes(self.df)
         self.assertEqual(self.modfile.version, '1.0.0')
         self.assertTrue(self.modfile.has_errors())
         self.assertIn('More than one version', self.errors[0])
@@ -254,6 +293,7 @@ class ModFileTextHotfixesTests(unittest.TestCase):
             '# License: Public Domain',
             '# License: CC BY-SA 4.0',
             ])
+        self.modfile.load_text_hotfixes(self.df)
         self.assertEqual(self.modfile.license, 'Public Domain')
         self.assertTrue(self.modfile.has_errors())
         self.assertIn('More than one license', self.errors[0])
@@ -265,6 +305,7 @@ class ModFileTextHotfixesTests(unittest.TestCase):
             '# License URL: https://creativecommons.org/publicdomain/',
             '# License URL: https://creativecommons.org/licenses/by-sa/4.0/',
             ])
+        self.modfile.load_text_hotfixes(self.df)
         self.assertEqual(self.modfile.license_url, 'https://creativecommons.org/publicdomain/')
         self.assertTrue(self.modfile.has_errors())
         self.assertIn('More than one license URL', self.errors[0])
@@ -276,6 +317,7 @@ class ModFileTextHotfixesTests(unittest.TestCase):
             '# Nexus: https://www.nexusmods.com/borderlands3/mods/128',
             '# Nexus: https://www.nexusmods.com/borderlands2/mods/50',
             ])
+        self.modfile.load_text_hotfixes(self.df)
         self.assertEqual(self.modfile.nexus_link, 'https://www.nexusmods.com/borderlands3/mods/128')
         self.assertTrue(self.modfile.has_errors())
         self.assertIn('More than one nexus URL', self.errors[0])
