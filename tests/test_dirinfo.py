@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
 # vim: set expandtab tabstop=4 shiftwidth=4:
 
-# Copyright 2019 Christopher J. Kucera
+# Copyright 2019-2020 Christopher J. Kucera
 # <cj@apocalyptech.com>
 # <http://apocalyptech.com/contact.php>
 #
-# This file is part of Borderlands ModCabinet Sorter.
+# This file is part of Borderlands 3 ModCabinet Sorter.
 #
-# Borderlands ModCabinet Sorter is free software: you can redistribute it
+# Borderlands 3 ModCabinet Sorter is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation, either version 3 of
 # the License, or (at your option) any later version.
 #
-# Borderlands ModCabinet Sorter is distributed in the hope that it will
+# Borderlands 3 ModCabinet Sorter is distributed in the hope that it will
 # be useful, but WITHOUT ANY WARRANTY; without even the implied
 # warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 # See the GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Borderlands ModCabinet Sorter.  If not, see
+# along with Borderlands 3 ModCabinet Sorter.  If not, see
 # <https://www.gnu.org/licenses/>.
 
 import os
@@ -49,24 +49,24 @@ class DirInfoTests(unittest.TestCase):
         self.assertEqual(info.get_all_no_ext(), [])
 
     def test_author_level_1(self):
-        dirname = 'BL2 Mods'
+        dirname = ''
         info = self.new_dirinfo(dirname, [])
         self.assertEqual(info.dir_author, '(unknown)')
 
     def test_author_level_2(self):
         author = 'Username'
-        dirname = 'BL2 Mods/{}'.format(author)
+        dirname = author
         info = self.new_dirinfo(dirname, [])
         self.assertEqual(info.dir_author, author)
 
     def test_author_level_3(self):
         author = 'Username'
-        dirname = 'BL2 Mods/{}/Mod Name'.format(author)
+        dirname = '{}/Mod Name'.format(author)
         info = self.new_dirinfo(dirname, [])
         self.assertEqual(info.dir_author, author)
 
     def test_one_file_no_ext(self):
-        dirname = 'BL2 Mods/Username'
+        dirname = 'Username'
         filename = 'filename'
         info = self.new_dirinfo(dirname, [filename])
         # Lots of stuff getting tested, actually
@@ -83,7 +83,7 @@ class DirInfoTests(unittest.TestCase):
         self.assertEqual(info.get_all_with_ext('txt'), [])
 
     def test_one_file_with_ext(self):
-        dirname = 'BL2 Mods/Username'
+        dirname = 'Username'
         filename = 'filename.txt'
         info = self.new_dirinfo(dirname, [filename])
         self.assertIn(filename, info)
@@ -91,7 +91,7 @@ class DirInfoTests(unittest.TestCase):
         self.assertEqual(info.get_all_with_ext('txt'), [filename])
 
     def test_two_files_with_ext(self):
-        dirname = 'BL2 Mods/Username'
+        dirname = 'Username'
         filename1 = 'filename1.txt'
         filename2 = 'filename2.txt'
         info = self.new_dirinfo(dirname, [filename1, filename2])
@@ -101,7 +101,7 @@ class DirInfoTests(unittest.TestCase):
         self.assertEqual(sorted(info.get_all_with_ext('txt')), [filename1, filename2])
 
     def test_readme(self):
-        dirname = 'BL2 Mods/Username'
+        dirname = 'Username'
         filename = 'readme.txt'
         info = self.new_dirinfo(dirname, [filename])
         self.assertIn(filename, info)
@@ -109,7 +109,7 @@ class DirInfoTests(unittest.TestCase):
         self.assertEqual(info.readme, filename)
 
     def test_readme_inner(self):
-        dirname = 'BL2 Mods/Username'
+        dirname = 'Username'
         filename = 'zzzreadmezzz.txt'
         info = self.new_dirinfo(dirname, [filename])
         self.assertIn(filename, info)

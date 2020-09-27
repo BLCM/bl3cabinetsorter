@@ -1,5 +1,5 @@
 Borderlands 3 ModCabinet Sorter
-=============================
+===============================
 
 This is an attempt to create an automated ModCabinet wiki for the BL3
 mods housed in the bl3mods github.
@@ -75,7 +75,7 @@ TODO
 License
 -------
 
-Borderlands ModCabinet Sorter is licensed under the
+Borderlands 3 ModCabinet Sorter is licensed under the
 [GPLv3 or later](https://www.gnu.org/licenses/quick-guide-gplv3.html).
 See [COPYING.txt](COPYING.txt) for the full text of the license.
 

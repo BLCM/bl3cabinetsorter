@@ -12,13 +12,13 @@
 # as published by the Free Software Foundation, either version 3 of
 # the License, or (at your option) any later version.
 #
-# Borderlands ModCabinet Sorter is distributed in the hope that it will
+# Borderlands 3 ModCabinet Sorter is distributed in the hope that it will
 # be useful, but WITHOUT ANY WARRANTY; without even the implied
 # warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 # See the GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Borderlands ModCabinet Sorter.  If not, see
+# along with Borderlands 3 ModCabinet Sorter.  If not, see
 # <https://www.gnu.org/licenses/>.
 
 import os
@@ -639,12 +639,24 @@ class ModFile(Cacheable):
                         key = key.strip().lower()
                         val = val.strip()
                         if key == 'name':
-                            self.mod_title = val
+                            if not self.mod_title:
+                                self.mod_title = val
+                                self.error_list.append('WARNING: More than one mod name specified in `{}`'.format(
+                                    self.rel_filename,
+                                    ))
+                            else:
+                                self.errors = True
                         elif key == 'author':
                             # Ignoring this; we actually take it from the directory
                             pass
                         elif key == 'version':
-                            self.version = val
+                            if not self.version:
+                                self.version = val
+                            else:
+                                self.errors = True
+                                self.error_list.append('WARNING: More than one version specified in `{}`'.format(
+                                    self.rel_filename,
+                                    ))
                         elif key == 'categories':
                             for cat in [c.strip().lower() for c in val.split(',')]:
                                 if cat in self.valid_categories:
@@ -656,15 +668,34 @@ class ModFile(Cacheable):
                                         self.rel_filename,
                                         ))
                         elif key == 'license':
-                            self.license = val
+                            # TODO: Honestly, we should probably allow multiple licenses...
+                            if not self.license:
+                                self.license = val
+                            else:
+                                self.errors = True
+                                self.error_list.append('WARNING: More than one license specified in `{}`'.format(
+                                    self.rel_filename,
+                                    ))
                         elif key == 'license url':
-                            self.license_url = val
+                            if not self.license_url:
+                                self.license_url = val
+                            else:
+                                self.errors = True
+                                self.error_list.append('WARNING: More than one license URL specified in `{}`'.format(
+                                    self.rel_filename,
+                                    ))
                         elif key == 'screenshot':
                             self.screenshots.append(val)
                         elif key == 'video':
                             self.video_urls.append(val)
                         elif key == 'nexus':
-                            self.nexus_link = val
+                            if not self.nexus_link:
+                                self.nexus_link = val
+                            else:
+                                self.errors = True
+                                self.error_list.append('WARNING: More than one nexus URL specified in `{}`'.format(
+                                    self.rel_filename,
+                                    ))
                         elif key == 'url':
                             self.urls.append(val)
                         else:
