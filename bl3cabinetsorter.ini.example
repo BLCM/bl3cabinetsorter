@@ -1,0 +1,16 @@
+[mods]
+clone_url = git@github.com-githubusername:BLCM/bl3mods.git
+base_url = https://github.com/BLCM/bl3mods/tree/master/
+download_url = https://raw.githubusercontent.com/BLCM/bl3mods/master/
+repo_dir = /home/username/git/bl3mods
+
+[wiki]
+clone_url = git@github.com-githubusername:BLCM/BL3ModCabinet.wiki.git
+cabinet_dir = /home/username/git/BL3ModCabinet.wiki
+
+[cache]
+cache_dir = cache
+
+[logging]
+log_dir = logs
+default_level = INFO

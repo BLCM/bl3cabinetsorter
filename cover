@@ -1,0 +1,2 @@
+# Script to run 'coverage' on our test suite
+coverage run --source=bl3cabinetsorter ./runtests.py && coverage report -m
