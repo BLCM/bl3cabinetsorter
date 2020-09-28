@@ -687,19 +687,19 @@ class ModFile(Cacheable):
                                     self.rel_filename,
                                     ))
                         elif key == 'screenshot':
-                            self.screenshots.append(val)
+                            self.screenshots.append(ModURL(val))
                         elif key == 'video':
-                            self.video_urls.append(val)
+                            self.video_urls.append(ModURL(val))
                         elif key == 'nexus':
                             if not self.nexus_link:
-                                self.nexus_link = val
+                                self.nexus_link = ModURL(val)
                             else:
                                 self.errors = True
                                 self.error_list.append('WARNING: More than one nexus URL specified in `{}`'.format(
                                     self.rel_filename,
                                     ))
                         elif key == 'url':
-                            self.urls.append(val)
+                            self.urls.append(ModURL(val))
                         else:
                             self.errors = True
                             self.error_list.append('WARNING: Unknown key in "{} in `{}`'.format(
