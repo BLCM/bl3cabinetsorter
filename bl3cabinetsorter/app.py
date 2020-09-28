@@ -864,8 +864,15 @@ class Readme(Cacheable):
             for section in self.mapping.keys():
                 if Levenshtein.ratio(mod_name_lower, section) > .8:
                     return self.mapping[section]
-            return []
-
+            # New for the BL3 modcabinet, since I've got multiple variants of
+            # the same mod alongside a single README: I'm gonna default to
+            # the overview/first/default sections if I can.
+            if 'overview' in self.mapping:
+                return self.mapping['overview']
+            if self.first_section:
+                return self.mapping[self.first_section]
+            else:
+                return self.mapping['(default)']
 
     def serialize(self):
         """
