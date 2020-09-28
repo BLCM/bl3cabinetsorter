@@ -294,7 +294,13 @@ class FileCacheTests(unittest.TestCase):
             cache.load(dirinfo, 'filename')
 
     def test_load_mod_new_file(self):
-        mod_filename = self.make_file('', 'filename', ['testing'], mtime=42)
+        mod_filename = self.make_file('', 'filename', [
+            '# Name: Mod Name',
+            '# Categories: cat1',
+            '# testing',
+            '',
+            'SparkServiceWhatever',
+            ], mtime=42)
         cache_filename = os.path.join(self.tmpdir, 'cache')
         cache = FileCache(ModFile, cache_filename)
         cache.save()
@@ -302,7 +308,7 @@ class FileCacheTests(unittest.TestCase):
         # Reload from disk, just in case anything's weird
         cache = FileCache(ModFile, cache_filename)
         dirinfo = DirInfo('/tmp/doesnotexist', self.tmpdir, ['filename'])
-        loaded_mod = cache.load(dirinfo, 'filename')
+        loaded_mod = cache.load(dirinfo, 'filename', valid_categories=self.valid_cats)
         self.assertIsNotNone(loaded_mod)
         self.assertEqual(loaded_mod.status, ModFile.S_NEW)
         self.assertIn(mod_filename, cache)
@@ -328,7 +334,13 @@ class FileCacheTests(unittest.TestCase):
         self.assertEqual(loaded_mod.mod_desc, ['no overwrite'])
 
     def test_load_mod_newer(self):
-        mod_filename = self.make_file('', 'filename', ['testing'], mtime=84)
+        mod_filename = self.make_file('', 'filename', [
+            '# Name: Mod Name',
+            '# Categories: cat1',
+            '# testing',
+            '',
+            'SparkServiceWhatever',
+            ], mtime=84)
         mod = ModFile(42)
         mod.mod_title = 'Testing Mod'
         mod.mod_desc = ['overwrite']
@@ -340,7 +352,7 @@ class FileCacheTests(unittest.TestCase):
         # Reload from disk, just in case anything's weird
         cache = FileCache(ModFile, cache_filename)
         dirinfo = DirInfo('/tmp/doesnotexist', self.tmpdir, ['filename'])
-        loaded_mod = cache.load(dirinfo, 'filename')
+        loaded_mod = cache.load(dirinfo, 'filename', valid_categories=self.valid_cats)
         self.assertIsNotNone(loaded_mod)
         self.assertEqual(loaded_mod.status, ModFile.S_UPDATED)
         self.assertIn(mod_filename, cache)

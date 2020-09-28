@@ -74,8 +74,10 @@ class DirInfo(object):
         self.dirpath = dirpath
         self.rel_dirpath = dirpath[len(self.repo_dir)+1:]
         path_components = self.rel_dirpath.split(os.sep)
-        if path_components:
+        if path_components and path_components[0] != '':
             self.dir_author = path_components[0]
+        else:
+            self.dir_author = '(unknown)'
         self.cur_path = path_components[-1]
         self.lower_mapping = {}
         self.extension_map = {}
@@ -1014,6 +1016,7 @@ class FileCache(object):
                 self.mapping[full_filename] = self.cache_class(mtime, dirinfo, filename, initial_status, **extra)
             except NotAModFile:
                 # Eh, whatever
+                #self.mapping[full_filename] = None
                 pass
         return self.mapping[full_filename]
 
