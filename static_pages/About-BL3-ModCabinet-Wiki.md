@@ -1,9 +1,10 @@
 [[← Go Back|Home]]
 
-The ModCabinet wiki exists to provide a slightly-easier way of browsing through
+The BL3 ModCabinet wiki exists to provide a slightly-easier way of browsing through
 Borderlands 3 mods, apart from digging through the somewhat-daunting main
 github repo.  For information on actually building your own mods, the [BLCMods
-Wiki](https://github.com/BLCM/BLCMods/wiki) is your best starting point.
+Wiki](https://github.com/BLCM/BLCMods/wiki) is your best starting point.  (The
+Borderlands 3-specific pages are near the bottom.)
 
 The content of this wiki is auto-generated on a regular basis.  Check the
 [[Wiki Status]] page for the most recent update time, and any errors which

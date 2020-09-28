@@ -9,8 +9,6 @@ in your mod to the Github.  Here's how!
 - [Licensing](#licensing)
 - [Screenshots, Videos, Nexus Mods Links, and other URLs](#screenshots-videos-nexus-mods-links-and-other-urls)
 - [Update Frequency / Error Reporting](#update-frequency--error-reporting)
-- [Comments](#comments)
-- [Mods Whose Filenames Start With A Hash Sign](#mods-whose-filenames-start-with-a-hash-sign-)
 - [Formatting your README for Maximum Results](#formatting-your-readme-for-maximum-results)
 
 ## Adding Your Mod to ModCabinet
@@ -52,6 +50,18 @@ other information specified in there which can be specified up there as well (yo
 see that I've got `Version`, `License`, and `License URL`, for instance), but only
 `Name` and `Categories` are required.
 
+The example there uses three hash marks for comments (`###`) but that's just so that
+it's a bit more visible -- you only need to use one (`#`).
+
+## Mod Name, Version, and Author
+
+The `Name` attribute defines the name of the mod, as it will show up in the
+BL3 ModCabinet.  `Version` is entirely optional, but is a nice way for users to
+know if they're using the most recent version of a mod or not.  `Author` is
+mostly just there for the user's sake, so they can know who wrote the mod by
+just looking at their files.  The BL3 ModCabinet process will actually take your
+username from the directory it's stored in, in the github area.
+
 ## Assigning Categories
 
 The current valid categories that you can use in your mod file are listed on
@@ -63,29 +73,16 @@ If you have more than one, be sure to have a comma inbetween each one.  You can
 also put a space inbetween them, as I've done in the example, but you don't
 have to.
 
-## Mod Name, Version, and Author
-
-The `Name` attribute defines the name of the mod, as it will show up in the
-BL3 ModCabinet.  `Version` is entirely optional, but is a nice way for users to
-know if they're using the most recent version of a mod or not.  `Author` is
-mostly just there for the user's sake, so they can know who wrote the mod by
-just looking at their files.  The BL3 ModCabinet process will actually take your
-username from the directory it's stored in, in the github area.
-
 ## Licensing
 
 Licensing of your mod files is not required, but it's encouraged to have a
-description of what other people are allowed to do with your mods.  The degree
-to which licensing even makes *sense* in the case of mods like this is up for
-debate.  After all, if you write a hotfix which makes a gun twice as effective,
-what real *claim* can you make on the hotfix which makes it happen?
-
-Nevertheless, the mod community's historically needed to have some boundaries
-around questions like whether or not it's okay to include someone's mod in
-a modpack, or if it's okay to upload something to Nexus, or to some other
-site.  In general, without a license, the only thing you can assume is that
-you're not allowed to do *anything* with the mod but use it for personal
-use.  So, I'd recommend that you put an explicit license on the mod.
+description of what other people are allowed to do with your mods.  Historically
+there have been questions about people including mods in modpacks, or
+uploading them to other modding sites (like Nexus), and if you attach a
+license to your mod, any ambiguity as to what people can do with it
+will disappear.  If you don't specify a license, the safest assumption people
+can make is that they're *only* allowed to use the mod for personal use,
+but it'll be in a state of ambiguity.
 
 The most "open" license possible is "Public Domain," which says that you're
 allowed to do whatever the heck you want with the mod.  All of Apocalyptech's
@@ -99,9 +96,11 @@ for his BL3 mods, which says that you can share and modify the mods all you
 want, so long as you attribute Apocalyptech for the original mod, and allow
 others to do the same with your modifications.
 
-Obviously this is very much a personal choice, and you're welcome to use
+Obviously licensing is a very personal choice, and you're welcome to use
 whatever you like here, but having *some* explicit license for your mods can
-prevent confusion and mis-communication in the future.
+prevent confusion and mis-communication in the future.  Even if you just
+say that "redistribution or use in mod packs is not allowed without explicit
+permission," that's better than saying nothing.
 
 ## Screenshots, Videos, Nexus Mods Links, and other URLs
 
@@ -145,8 +144,8 @@ if there's nothing right at the beginning).  That will be imported into
 the BL3 ModCabinet wiki.  If you have a section named `Changelog`, that will
 be imported into the ModCabinet page as well.  For an example of a
 ModCabinet page which has pulled in all these elements, see Apocalyptech's
-[[Speedier Sandskiffs]], which was generated using
-[this README](https://raw.githubusercontent.com/BLCM/BLCMods/master/Borderlands%202%20mods/Apocalyptech/Speedier%20Sandskiffs/README.md).
+[[BL3 Better Loot]], which was generated using
+[this README](https://raw.githubusercontent.com/BLCM/bl3mods/master/Apocalyptech/loot_changes/better_loot/README.md).
 
 In a directory with multiple mods, ModCabinet needs to have a clearly-marked
 section of the README file which has the same name as the mod.  Sections
@@ -155,9 +154,7 @@ headings such as hashes (`#`) or underlines (`---` or `===`), even if it's
 not Markdown.  You can also use Markdown-style list syntax, where the line
 containing the mod name is prefixed by a dash (`-`).  For instance, see [this README from
 Akathris](https://raw.githubusercontent.com/BLCM/BLCMods/master/Borderlands%202%20mods/Akathris/README.md),
-which applies to mods such as [[No More Moxxi Lifesteal v1.0]].  Note that
-mods in directories which contain multiple mods won't be able to read in
-Changelogs, so those will never show up in ModCabinet pages.
+from the BL2 ModCabinet wiki.
 
 ## That's it!
 

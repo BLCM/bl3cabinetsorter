@@ -4,16 +4,24 @@
 
 **Last Updated:** {{ mod.mod_time.strftime('%B %d, %Y') }}
 
+{%- if mod.version %}
+
+**Most Recent Version:** {{ mod.version }}
+{%- endif %}
+
 **In Categories:** {{ mod.get_cat_links(cats) }}
 
 {%- if mod.license %}
 {%- if mod.license_url %}
+
 **License:** <a href="{{ mod.license_url }}">{{ mod.license }}</a>
 {%- else %}
+
 **License:** {{ mod.license }}
 {%- endif %}
 {%- else %}
 {%- if mod.license_url %}
+
 **License:** <a href="{{ mod.license_url }}">{{ mod.license_url }}</a>
 {%- endif %}
 {%- endif %}

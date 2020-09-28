@@ -2,8 +2,8 @@
 
 - [[Main Page|Home]]
 - [[Searching]]
-- [[About ModCabinet Wiki]]
-- [[Contributing to ModCabinet]]
+- [[About BL3 ModCabinet Wiki]]
+- [[Contributing to BL3 ModCabinet]]
 - [[Mod Categories]]
 - [[Wiki Status]]
 
