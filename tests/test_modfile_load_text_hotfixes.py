@@ -103,6 +103,16 @@ class ModFileTextHotfixesTests(unittest.TestCase):
         self.assertEqual(self.modfile.categories, set(['qol']))
         self.assertFalse(self.modfile.has_errors())
 
+    def test_load_colon_in_name(self):
+        self.set_df_contents([
+            '# Name: Mod Name: The Reckoning',
+            '# Categories: qol',
+            ])
+        self.modfile.load_text_hotfixes(self.df)
+        self.assertEqual(self.modfile.mod_title, 'Mod Name: The Reckoning')
+        self.assertEqual(self.modfile.categories, set(['qol']))
+        self.assertFalse(self.modfile.has_errors())
+
     def test_load_unknown_key(self):
         self.set_df_contents([
             '# Name: Mod Name',

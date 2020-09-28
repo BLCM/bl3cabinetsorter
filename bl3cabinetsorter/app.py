@@ -99,7 +99,7 @@ class DirInfo(object):
             # dir, which is probably safe enough, and I don't think I
             # care enough to try and prioritize, in dirs where there
             # might be more than one
-            if 'readme' in lower:
+            if 'readme' in lower and '.swp' not in lower:
                 self.readme = lower
 
     def __getitem__(self, key):
@@ -292,8 +292,8 @@ class Author(Cacheable):
         global wiki_link
         return wiki_link(self.name, self.name)
 
-    def rel_url(self, game):
-        return urllib.parse.quote('{}/{}'.format(game.dir_name, self.name))
+    def rel_url(self):
+        return urllib.parse.quote(self.name)
 
     def sort_modlist(self, modlist):
         """
@@ -630,14 +630,14 @@ class ModFile(Cacheable):
                     stripped = stripped.lstrip('#')
                     # Only strip a single space char after hashes, in case the in-mod
                     # description is using some indents
-                    if stripped[0] == ' ':
+                    if len(stripped) > 0 and stripped[0] == ' ':
                         stripped = stripped[1:]
 
                 if found_raw_comment:
                     cur_section.append(stripped)
                 else:
                     if ': ' in stripped:
-                        key, val = stripped.split(': ')
+                        key, val = stripped.split(': ', 1)
                         key = key.strip().lower()
                         val = val.strip()
                         if key == 'name':
@@ -814,7 +814,7 @@ class ModFile(Cacheable):
         to category pages which this mod belongs in.
         """
         return ', '.join([
-            c.wiki_link_abbrev(self.game) for c in [
+            c.wiki_link() for c in [
                 categories[catname] for catname in sorted(self.categories)
                 ]
             ])
@@ -1012,12 +1012,8 @@ class FileCache(object):
                 initial_status = Cacheable.S_NEW
             else:
                 initial_status = Cacheable.S_UPDATED
-            try:
-                self.mapping[full_filename] = self.cache_class(mtime, dirinfo, filename, initial_status, **extra)
-            except NotAModFile:
-                # Eh, whatever
-                #self.mapping[full_filename] = None
-                pass
+            # This might throw a NotAModFile exception, btw...
+            self.mapping[full_filename] = self.cache_class(mtime, dirinfo, filename, initial_status, **extra)
         return self.mapping[full_filename]
 
     def items(self):
@@ -1150,13 +1146,13 @@ class Category(object):
         global wiki_filename
         return wiki_filename(self.full_title)
 
-    def wiki_link(self, game):
+    def wiki_link(self):
         global wiki_link_html
-        return wiki_link_html(self.title, '{} {}'.format(game.abbreviation, self.full_title))
+        return wiki_link_html(self.title, self.full_title)
 
-    def wiki_link_abbrev(self, game_abbrev):
+    def wiki_link_abbrev(self):
         global wiki_link
-        return wiki_link(self.title, '{} {}'.format(game_abbrev, self.full_title))
+        return wiki_link(self.title, self.full_title)
 
     def __lt__(self, other):
         return self.full_title < other.full_title
@@ -1406,7 +1402,7 @@ class App(object):
                 static_pages[filename] = df.read()
 
         # Add all game/category pages to our reserved_pages list
-        reserved_pages.add('Borderlands 3 Mods')
+        reserved_pages.add('Borderlands 3 Mods.md')
         for cat in self.categories.values():
             reserved_pages.add(cat.wiki_filename())
 
@@ -1652,7 +1648,7 @@ class App(object):
                         )
 
             # Write out the game page, linking to all categories which have mods
-            game_filename = 'Borderlands 3 Mods'
+            game_filename = 'Borderlands 3 Mods.md'
             created_pages.add(game_filename)
             self.write_wiki_file(wiki_files,
                     game_filename,
@@ -1782,7 +1778,6 @@ class App(object):
         self.logger.debug('Writing caches')
         self.mod_cache.save()
         self.readme_cache.save()
-        self.info_cache.save()
         self.author_cache.save()
         self.templatemtime_cache.save()
 

@@ -12,6 +12,11 @@
 {%- else %}
 **License:** {{ mod.license }}
 {%- endif %}
+{%- else %}
+{%- if mod.license_url %}
+**License:** <a href="{{ mod.license_url }}">{{ mod.license_url }}</a>
+{%- endif %}
+{%- endif %}
 
 {%- if mod.related_links|length > 0 %}
 

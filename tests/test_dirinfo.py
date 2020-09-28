@@ -116,3 +116,11 @@ class DirInfoTests(unittest.TestCase):
         self.assertEqual(info.get_all_with_ext('txt'), [filename])
         self.assertEqual(info.readme, filename)
 
+    def test_readme_swap(self):
+        dirname = 'Username'
+        filename = 'readme.txt.swp'
+        info = self.new_dirinfo(dirname, [filename])
+        self.assertIn(filename, info)
+        self.assertEqual(info.get_all_with_ext('swp'), [filename])
+        self.assertEqual(info.readme, None)
+
