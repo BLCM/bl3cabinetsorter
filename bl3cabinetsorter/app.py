@@ -540,7 +540,7 @@ class ModFile(Cacheable):
         """
         Sets our new related links given a set of other mods
         """
-        new_links = sorted(
+        new_links = set(
             ['{}, by {}'.format(m.wiki_link(), m.mod_author) for m in related_mods]
             )
         if new_links != self.related_links:
