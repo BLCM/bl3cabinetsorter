@@ -80,7 +80,7 @@ might end up wanting to take over running this thing.  Here's how:
     1. `clone_url` is the URL used to check out the wiki.  github itself will
        not actually show the correct URL here -- it'll only tell you the
        "anonymous" HTTPS url.  You need to use the SSH-based URL which lets
-       you push new content, etc.  Its form will be `git@github.com:BLCM/BL3ModCabinet.wiki.git`.
+       you push new content, etc.  Its form will be `git@github.com:BLCM/bl3mods.wiki.git`.
        On my own system, I'm doing some shenanigans where I upload using
        an account different from my "main" github account,  so I actually
        specify the hostname bit there as `github.com-apocalyptechcabinet`,
@@ -100,7 +100,7 @@ might end up wanting to take over running this thing.  Here's how:
        wiki needs to have at least the main page, so create the first page from
        the web UI and *then* do your checkouts.
     2. Doublecheck that the resulting `repos/bl3mods` dir contains a checkout of
-       the mod archive, and the `repos/BL3ModCabinet.wiki` contains a checkout
+       the mod archive, and the `repos/bl3mods.wiki` contains a checkout
        of the current wiki.
 10. By default, the sorter will only Do Things if it notices that there's been
     an update to the mods repo.  Since you just checked it out, there probably
