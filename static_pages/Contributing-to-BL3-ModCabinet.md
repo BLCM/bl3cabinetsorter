@@ -14,14 +14,16 @@ in your mod to the Github.  Here's how!
 ## Adding Your Mod to ModCabinet
 
 In order to have your mods listed in the ModCabinet, they have to be uploaded
-to [the main bl3mods Github repostiory](https://github.com/BLCM/bl3mods).  There
-are instructions for doing so [at the BLCMods Wiki](https://github.com/BLCM/BLCMods/wiki/Borderlands-3-Contribution).
+to [the main bl3mods Github repostiory](https://github.com/BLCM/bl3mods), and
+they need to have an extension of `.bl3hotfix`.  There are instructions for
+doing so [at the BLCMods Wiki](https://github.com/BLCM/BLCMods/wiki/Borderlands-3-Contribution).
 
 Once you know how to do that, getting your mod in this wiki is easy: you just
-need to make sure that your mod file has the appropriate comments up at the
-top of the file.  Once the comments specify the name of your mod, and the
-categories it should be put into, the BL3 ModCabinet wiki should get updated
-within ten minutes to include your mod.
+need to make sure that your mod file has the required `.bl3hotfix` file
+extension, and the appropriate comments up at the top of the file.  Once the
+comments specify the name of your mod, and the categories it should be put
+into, the BL3 ModCabinet wiki should get updated within ten minutes to include
+your mod.
 
 Basically, your mod needs to have a "header" at the top of the file, before any
 of the hotfix statements (and before any free-form docs/notes you might want

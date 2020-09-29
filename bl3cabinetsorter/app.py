@@ -1449,10 +1449,10 @@ class App(object):
 
             # Loop through the mods found in the dir and load 'em, if we can
             processed_files = []
-            for txt_file in dirinfo.get_all_with_ext('txt'):
-                if 'readme' not in txt_file.lower():
+            for mod_file in dirinfo.get_all_with_ext('bl3hotfix'):
+                if 'readme' not in mod_file.lower():
                     try:
-                        processed_files.append(self.mod_cache.load(dirinfo, txt_file,
+                        processed_files.append(self.mod_cache.load(dirinfo, mod_file,
                             error_list=self.error_list,
                             valid_categories=self.categories,
                             ))
