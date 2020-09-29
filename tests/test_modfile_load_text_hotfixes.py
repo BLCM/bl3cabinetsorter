@@ -42,7 +42,7 @@ class ModFileTextHotfixesTests(unittest.TestCase):
         """
         self.errors = []
         self.modfile = ModFile(0, error_list=self.errors, valid_categories=self.valid_categories)
-        self.modfile.full_filename = 'modname.txt'
+        self.modfile.full_filename = 'modname.bl3hotfix'
         self.df = io.StringIO()
 
     def set_df_contents(self, lines, do_contents=True, newline_after=True):
@@ -147,19 +147,19 @@ class ModFileTextHotfixesTests(unittest.TestCase):
         self.assertEqual(self.modfile.version, '1.0.0')
         self.assertEqual(self.modfile.license, 'Public Domain')
         self.assertEqual(self.modfile.license_url, 'https://creativecommons.org/share-your-work/public-domain/')
-        self.assertEqual(set(self.modfile.screenshots), set([
+        self.assertEqual(set([u.url for u in self.modfile.screenshots]), set([
             'https://i.imgur.com/ClUttYw.gif',
             'https://i.imgur.com/W5BHeOB.jpg',
             ]))
-        self.assertEqual(set(self.modfile.video_urls), set([
+        self.assertEqual(set([u.url for u in self.modfile.video_urls]), set([
             'https://www.youtube.com/watch?v=JiEu23G4onM',
             'https://www.youtube.com/watch?v=d9Gu1PspA3Y',
             ]))
-        self.assertEqual(set(self.modfile.urls), set([
+        self.assertEqual(set([u.url for u in self.modfile.urls]), set([
             'https://borderlands.com/en-US/news/2020-09-10-borderlands-3-patch-hotfixes-sept-10/',
             'https://borderlands.com/en-US/news/2020-09-17-borderlands-3-hotfixes-sept-17/',
             ]))
-        self.assertEqual(self.modfile.nexus_link, 'https://www.nexusmods.com/borderlands3/mods/128')
+        self.assertEqual(self.modfile.nexus_link.url, 'https://www.nexusmods.com/borderlands3/mods/128')
         self.assertFalse(self.modfile.has_errors())
 
     def test_load_full_headers_multiple_hashes(self):
@@ -184,19 +184,19 @@ class ModFileTextHotfixesTests(unittest.TestCase):
         self.assertEqual(self.modfile.version, '1.0.0')
         self.assertEqual(self.modfile.license, 'Public Domain')
         self.assertEqual(self.modfile.license_url, 'https://creativecommons.org/share-your-work/public-domain/')
-        self.assertEqual(set(self.modfile.screenshots), set([
+        self.assertEqual(set([u.url for u in self.modfile.screenshots]), set([
             'https://i.imgur.com/ClUttYw.gif',
             'https://i.imgur.com/W5BHeOB.jpg',
             ]))
-        self.assertEqual(set(self.modfile.video_urls), set([
+        self.assertEqual(set([u.url for u in self.modfile.video_urls]), set([
             'https://www.youtube.com/watch?v=JiEu23G4onM',
             'https://www.youtube.com/watch?v=d9Gu1PspA3Y',
             ]))
-        self.assertEqual(set(self.modfile.urls), set([
+        self.assertEqual(set([u.url for u in self.modfile.urls]), set([
             'https://borderlands.com/en-US/news/2020-09-10-borderlands-3-patch-hotfixes-sept-10/',
             'https://borderlands.com/en-US/news/2020-09-17-borderlands-3-hotfixes-sept-17/',
             ]))
-        self.assertEqual(self.modfile.nexus_link, 'https://www.nexusmods.com/borderlands3/mods/128')
+        self.assertEqual(self.modfile.nexus_link.url, 'https://www.nexusmods.com/borderlands3/mods/128')
         self.assertFalse(self.modfile.has_errors())
 
     def test_load_full_headers_lowercase(self):
@@ -221,19 +221,19 @@ class ModFileTextHotfixesTests(unittest.TestCase):
         self.assertEqual(self.modfile.version, '1.0.0')
         self.assertEqual(self.modfile.license, 'Public Domain')
         self.assertEqual(self.modfile.license_url, 'https://creativecommons.org/share-your-work/public-domain/')
-        self.assertEqual(set(self.modfile.screenshots), set([
+        self.assertEqual(set([u.url for u in self.modfile.screenshots]), set([
             'https://i.imgur.com/ClUttYw.gif',
             'https://i.imgur.com/W5BHeOB.jpg',
             ]))
-        self.assertEqual(set(self.modfile.video_urls), set([
+        self.assertEqual(set([u.url for u in self.modfile.video_urls]), set([
             'https://www.youtube.com/watch?v=JiEu23G4onM',
             'https://www.youtube.com/watch?v=d9Gu1PspA3Y',
             ]))
-        self.assertEqual(set(self.modfile.urls), set([
+        self.assertEqual(set([u.url for u in self.modfile.urls]), set([
             'https://borderlands.com/en-US/news/2020-09-10-borderlands-3-patch-hotfixes-sept-10/',
             'https://borderlands.com/en-US/news/2020-09-17-borderlands-3-hotfixes-sept-17/',
             ]))
-        self.assertEqual(self.modfile.nexus_link, 'https://www.nexusmods.com/borderlands3/mods/128')
+        self.assertEqual(self.modfile.nexus_link.url, 'https://www.nexusmods.com/borderlands3/mods/128')
         self.assertFalse(self.modfile.has_errors())
 
     def test_load_full_headers_extra_spaces(self):
@@ -258,19 +258,19 @@ class ModFileTextHotfixesTests(unittest.TestCase):
         self.assertEqual(self.modfile.version, '1.0.0')
         self.assertEqual(self.modfile.license, 'Public Domain')
         self.assertEqual(self.modfile.license_url, 'https://creativecommons.org/share-your-work/public-domain/')
-        self.assertEqual(set(self.modfile.screenshots), set([
+        self.assertEqual(set([u.url for u in self.modfile.screenshots]), set([
             'https://i.imgur.com/ClUttYw.gif',
             'https://i.imgur.com/W5BHeOB.jpg',
             ]))
-        self.assertEqual(set(self.modfile.video_urls), set([
+        self.assertEqual(set([u.url for u in self.modfile.video_urls]), set([
             'https://www.youtube.com/watch?v=JiEu23G4onM',
             'https://www.youtube.com/watch?v=d9Gu1PspA3Y',
             ]))
-        self.assertEqual(set(self.modfile.urls), set([
+        self.assertEqual(set([u.url for u in self.modfile.urls]), set([
             'https://borderlands.com/en-US/news/2020-09-10-borderlands-3-patch-hotfixes-sept-10/',
             'https://borderlands.com/en-US/news/2020-09-17-borderlands-3-hotfixes-sept-17/',
             ]))
-        self.assertEqual(self.modfile.nexus_link, 'https://www.nexusmods.com/borderlands3/mods/128')
+        self.assertEqual(self.modfile.nexus_link.url, 'https://www.nexusmods.com/borderlands3/mods/128')
         self.assertFalse(self.modfile.has_errors())
 
     def test_load_multiple_names(self):
@@ -328,7 +328,7 @@ class ModFileTextHotfixesTests(unittest.TestCase):
             '# Nexus: https://www.nexusmods.com/borderlands2/mods/50',
             ])
         self.modfile.load_text_hotfixes(self.df)
-        self.assertEqual(self.modfile.nexus_link, 'https://www.nexusmods.com/borderlands3/mods/128')
+        self.assertEqual(self.modfile.nexus_link.url, 'https://www.nexusmods.com/borderlands3/mods/128')
         self.assertTrue(self.modfile.has_errors())
         self.assertIn('More than one nexus URL', self.errors[0])
 

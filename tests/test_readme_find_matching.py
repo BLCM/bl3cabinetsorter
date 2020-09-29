@@ -143,5 +143,8 @@ class ReadmeReadFindMatchingTests(unittest.TestCase):
             '# Foobar',
             'Not Matched',
             ])
+        # Unlike the BL2/TPS cabinet, multi-mod matches *will* include the
+        # first category.
         self.assertEqual(self.readme.find_matching('xyzzy', single_mod=False),
-                [])
+                ['Beginning Text'])
+
