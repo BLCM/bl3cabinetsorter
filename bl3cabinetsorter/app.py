@@ -1197,6 +1197,7 @@ class App(object):
         ('mode-balance', Category('General Gameplay and Balance: Game Mode Balance')),
         ('scaling', Category('General Gameplay and Balance: Scaling Changes')),
         ('mayhem', Category('General Gameplay and Balance: Mayhem Mode Changes')),
+        ('armsrace', Category('General Gameplay and Balance: Arms Race Changes')),
         ('element', Category('General Gameplay and Balance: Elements and Damage Types')),
         ('quest-changes', Category('General Gameplay and Balance: Quest Changes')),
         ('economy', Category('General Gameplay and Balance: Economy Changes')),
