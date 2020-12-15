@@ -1310,6 +1310,7 @@ class App(object):
 
         # Grab Jinja templates
         jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates'))
+        self.home_template = jinja_env.get_template('home.md')
         self.game_template = jinja_env.get_template('game.md')
         self.cat_template = jinja_env.get_template('category.md')
         self.mod_template = jinja_env.get_template('mod.md')
@@ -1394,11 +1395,12 @@ class App(object):
         seen_cats = {}
 
         # Set up a reserved and created pages set
+        home_filename = 'Home.md'
         status_filename = 'Wiki-Status.md'
         sidebar_filename = '_Sidebar.md'
         category_filename = 'Mod-Categories.md'
-        reserved_pages = set([status_filename, sidebar_filename, category_filename])
-        created_pages = set([status_filename, sidebar_filename, category_filename])
+        reserved_pages = set([home_filename, status_filename, sidebar_filename, category_filename])
+        created_pages = set([home_filename, status_filename, sidebar_filename, category_filename])
 
         # Anything in our static_pages dir should be reserved
         self.logger.debug('Reading in static pages')
@@ -1655,15 +1657,27 @@ class App(object):
                             }),
                         )
 
-            # Write out the game page, linking to all categories which have mods
-            game_filename = 'Borderlands 3 Mods.md'
-            created_pages.add(game_filename)
-            self.write_wiki_file(wiki_files,
-                    game_filename,
-                    self.game_template.render({
-                        'categories': game_cats,
-                        })
-                    )
+        # Write out the Home page, linking to all categories which have mods
+        self.write_wiki_file(wiki_files,
+                home_filename,
+                self.home_template.render({
+                    'categories': game_cats,
+                    })
+                )
+
+        # Write out the game page, linking to all categories which have mods
+        # (This page is a bit orphaned - we've moved this to also be on the
+        # main homepage.  We'll leave it in, though, on the offchance we get
+        # some kind of TPSalike and end up being able to use the same modding
+        # method for more than one game, as with the BL2/TPS modcabinet.)
+        game_filename = 'Borderlands 3 Mods.md'
+        created_pages.add(game_filename)
+        self.write_wiki_file(wiki_files,
+                game_filename,
+                self.game_template.render({
+                    'categories': game_cats,
+                    })
+                )
 
         # Write out sidebar
         self.logger.debug('Writing sidebar')

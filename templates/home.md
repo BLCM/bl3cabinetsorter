@@ -12,7 +12,16 @@ The Borderlands 3-specific pages are categorized near the bottom.
 
 # Mod Categories
 
-- [[Borderlands 3 Mods|Borderlands 3 Mods]]
+{%- for cat in categories %}
+{%- if cat.prefix and (not loop.previtem or not loop.previtem.prefix or (loop.previtem.prefix != cat.prefix)) %}
+- {{ cat.prefix }}
+{%- endif %}
+{%- if cat.prefix %}
+  - {{ cat.wiki_link() }}
+{%- else %}
+- {{ cat.wiki_link() }}
+{%- endif %}
+{%- endfor %}
 
 # Other Pages
 
