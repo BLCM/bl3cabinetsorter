@@ -7,8 +7,8 @@ categories rather than just organized by author.
 
 This wiki is a resource for users who are just looking to run some mods.
 For information on actually building your own mods, the [BLCMods
-Wiki](https://github.com/BLCM/BLCMods/wiki) is your best starting point.
-The Borderlands 3-specific pages are categorized near the bottom.
+Wiki](https://github.com/BLCM/BLCMods/wiki/Borderlands-3-Modding-Info) is your best
+starting point.
 
 # Mod Categories
 
