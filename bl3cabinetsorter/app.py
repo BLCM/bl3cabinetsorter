@@ -25,6 +25,7 @@ import os
 import re
 import sys
 import git
+import gzip
 import json
 import lzma
 import html
@@ -87,6 +88,8 @@ class DirInfo(object):
             lower = n.lower()
             if '.' in lower:
                 ext = lower.split('.')[-1]
+                if ext == 'gz':
+                    ext = '.'.join(lower.split('.')[-2:])
                 if ext not in self.extension_map:
                     self.extension_map[ext] = [lower]
                 else:
@@ -418,20 +421,32 @@ class ModFile(Cacheable):
             # use utf-8 for those, but other mod files use unicode chars
             # in their category names, and I'd like to be able to read
             # those properly.
-            try:
-                with open(self.full_filename, encoding='utf-8') as df:
-                    df.read()
-                encoding = 'utf-8'
-            except UnicodeDecodeError:
-                encoding = 'latin1'
+            if self.full_filename.endswith('.gz'):
+                try:
+                    with gzip.open(self.full_filename, mode='rt', encoding='utf-8') as df:
+                        df.read()
+                    encoding = 'utf-8'
+                except UnicodeDecodeError:
+                    encoding = 'latin1'
+            else:
+                try:
+                    with open(self.full_filename, encoding='utf-8') as df:
+                        df.read()
+                    encoding = 'utf-8'
+                except UnicodeDecodeError:
+                    encoding = 'latin1'
 
-            with open(self.full_filename, encoding=encoding) as df:
+            if self.full_filename.endswith('.gz'):
+                df = gzip.open(self.full_filename, mode='rt', encoding=encoding)
+            else:
+                df = open(self.full_filename, encoding=encoding)
+            first_line = df.readline()
+            while first_line.strip() == '':
                 first_line = df.readline()
-                while first_line.strip() == '':
-                    first_line = df.readline()
-                    if first_line == '':
-                        raise NotAModFile('Empty file found')
-                self.load_text_hotfixes(df)
+                if first_line == '':
+                    raise NotAModFile('Empty file found')
+            self.load_text_hotfixes(df)
+            df.close()
         else:
             # This is used when deserializing
             self.seen = False
@@ -1452,7 +1467,7 @@ class App(object):
 
             # Loop through the mods found in the dir and load 'em, if we can
             processed_files = []
-            for mod_file in dirinfo.get_all_with_ext('bl3hotfix'):
+            for mod_file in dirinfo.get_all_with_ext('bl3hotfix') + dirinfo.get_all_with_ext('bl3hotfix.gz'):
                 if 'readme' not in mod_file.lower():
                     try:
                         processed_files.append(self.mod_cache.load(dirinfo, mod_file,
