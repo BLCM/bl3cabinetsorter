@@ -375,6 +375,27 @@ class NotAModFile(Exception):
     actually be a properly-formatted mod file.
     """
 
+class FakeMod:
+    """
+    A fake mod, used to inject some hardcoded data into the modcabinet
+    (just used to the Enemy and Skill randomizers, at time of writing)
+    """
+
+    def __init__(self, mod_title, author_text):
+        self.mod_title = mod_title
+        self.author_text = author_text
+        self.is_real = False
+
+    def __lt__(self, other):
+        """
+        Sort by mod title
+        """
+        return self.mod_title.lower() < other.mod_title.lower()
+
+    def wiki_link_html(self):
+        global wiki_link_html
+        return wiki_link_html(self.mod_title, self.mod_title)
+
 class ModFile(Cacheable):
     """
     Class to pull info out of a mod file.
@@ -406,6 +427,7 @@ class ModFile(Cacheable):
         self.related_links = []
         self.re = Re()
         self.errors = False
+        self.is_real = True
 
         if dirinfo:
             # This is when we're actually loading from a file
@@ -1218,6 +1240,7 @@ class App(object):
         ('economy', Category('General Gameplay and Balance: Economy Changes')),
         ('event', Category('General Gameplay and Balance: Timed Event Changes')),
         ('gameplay', Category('General Gameplay and Balance: Other Gameplay Changes')),
+        ('randomizer', Category('General Gameplay and Balance: Randomizers')),
 
         # Characters and Skills
         ('char-overhaul', Category('Characters and Skills: Full Character Overhauls')),
@@ -1400,6 +1423,8 @@ class App(object):
         Actual function to do most of the work.
         """
 
+        global wiki_link_html
+
         # If we've been told to do initial tasks, do those first
         if do_initial_tasks:
             self.logger.info('Performing initial setup tasks.  This may take awhile')
@@ -1408,6 +1433,16 @@ class App(object):
 
         # Keep track of which categories we've seen
         seen_cats = {}
+        
+        # Hardcoded "fake" mods!
+        seen_cats['randomizer'] = [
+                FakeMod('Enemy and Skill Randomizers', '{} and {}'.format(
+                    wiki_link_html('SSpyR', 'SSpyR'),
+                    # HackerSmacker doesn't actually have other stuff in the cabinet yet
+                    #wiki_link_html('HackerSmacker', 'HackerSmacker'),
+                    'HackerSmacker',
+                    )),
+                ]
 
         # Set up a reserved and created pages set
         home_filename = 'Home.md'
