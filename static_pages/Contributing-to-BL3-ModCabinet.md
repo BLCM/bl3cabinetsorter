@@ -162,7 +162,7 @@ from the BL2 ModCabinet wiki.
 
 Just make sure that your mod has the necessary info at the top of the mod
 file, and it'll get picked up the next time it's run.  If you have problems,
-feel free to stop by [Shadow's Evil Hideout](http://borderlandsmodding.com/community/)
+feel free to stop by [the community Discords](http://borderlandsmodding.com/community/)
 and ask for help.  (Apocalyptech is the maintainer of this code at the moment,
 if you wanted to @ him specifically.)
 

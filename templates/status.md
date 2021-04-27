@@ -10,8 +10,7 @@ If you've updated your mod within the last ten minutes and the wiki
 has not updated yet, be patient and it should show up.  If it's been
 more than twenty minutes or so, doublecheck that your mod shows up
 properly at [the main bl3mods Github](https://github.com/BLCM/bl3mods),
-and ask for help at [Shadow's Evil Hideout](http://borderlandsmodding.com/community/)
-in the `#bl-modding` channel.
+and ask for help at [the community Discords](http://borderlandsmodding.com/community/).
 
 # Errors
 

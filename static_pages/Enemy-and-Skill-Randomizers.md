@@ -22,7 +22,7 @@ Repository Directory itself under SSpyR's folder).
 Currently the way the Enemy and Skill Randomizers are made they are set
 "Randomizations" that don't automatically adjust to new "Randomizations" upon a
 Save/Quit, they are more static (if you would like to learn more why that is
-you can ask further in ShadowEvils Discord, for sake of keeping things brief).
+you can ask further in the community Discords, for sake of keeping things brief).
 Changing how these Randomizers work is something being looked into but with the
 current way it works we have created programs (one in C that may possibly also
 turn into a plugin, and one in Python) to allow users to re-generate the Hotfix
@@ -58,5 +58,5 @@ Hotfixes and then you are all set.
 
 If you still require help or have anything further questions or reports
 regarding any of the information or mods stated please reach out on Discord to
-SSpyR inside of [Shadowevil's Discord](http://borderlandsmodding.com/community/).
+SSpyR inside of [the community Discords](http://borderlandsmodding.com/community/).
 
