@@ -1304,6 +1304,7 @@ class App(object):
         ('cheat', Category('Other: Cheat Mods')),
         ('modpack', Category('Other: Mod Packs')),
         ('translation', Category('Other: Translations')),
+        ('translation-fr', Category('Other: Translations (French)')),
         ('joke', Category('Other: Joke Mods')),
         ('resource', Category('Other: Resource Mods')),
 
