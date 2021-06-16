@@ -712,7 +712,8 @@ class ModFile(Cacheable):
                                 self.mod_title = val
                             else:
                                 self.errors = True
-                                self.error_list.append('WARNING: More than one mod name specified in `{}`'.format(
+                                self.error_list.append('WARNING: More than one mod name specified in `{}/{}`'.format(
+                                    self.rel_path,
                                     self.rel_filename,
                                     ))
                         elif key == 'author':
@@ -731,7 +732,8 @@ class ModFile(Cacheable):
                                 self.version = val
                             else:
                                 self.errors = True
-                                self.error_list.append('WARNING: More than one version specified in `{}`'.format(
+                                self.error_list.append('WARNING: More than one version specified in `{}/{}`'.format(
+                                    self.rel_path,
                                     self.rel_filename,
                                     ))
                         elif key == 'categories':
@@ -740,8 +742,9 @@ class ModFile(Cacheable):
                                     self.categories.add(cat)
                                 else:
                                     self.errors = True
-                                    self.error_list.append('WARNING: Invalid category "{}" in `{}`'.format(
+                                    self.error_list.append('WARNING: Invalid category "{}" in `{}/{}`'.format(
                                         cat,
+                                        self.rel_path,
                                         self.rel_filename,
                                         ))
                         elif key == 'license':
@@ -750,7 +753,8 @@ class ModFile(Cacheable):
                                 self.license = val
                             else:
                                 self.errors = True
-                                self.error_list.append('WARNING: More than one license specified in `{}`'.format(
+                                self.error_list.append('WARNING: More than one license specified in `{}/{}`'.format(
+                                    self.rel_path,
                                     self.rel_filename,
                                     ))
                         elif key == 'license url':
@@ -758,7 +762,8 @@ class ModFile(Cacheable):
                                 self.license_url = val
                             else:
                                 self.errors = True
-                                self.error_list.append('WARNING: More than one license URL specified in `{}`'.format(
+                                self.error_list.append('WARNING: More than one license URL specified in `{}/{}`'.format(
+                                    self.rel_path,
                                     self.rel_filename,
                                     ))
                         elif key == 'screenshot':
@@ -770,15 +775,17 @@ class ModFile(Cacheable):
                                 self.nexus_link = ModURL(val)
                             else:
                                 self.errors = True
-                                self.error_list.append('WARNING: More than one nexus URL specified in `{}`'.format(
+                                self.error_list.append('WARNING: More than one nexus URL specified in `{}/{}`'.format(
+                                    self.rel_path,
                                     self.rel_filename,
                                     ))
                         elif key == 'url':
                             self.urls.append(ModURL(val))
                         else:
                             self.errors = True
-                            self.error_list.append('WARNING: Unknown key "{}" in `{}`'.format(
+                            self.error_list.append('WARNING: Unknown key "{}" in `{}/{}`'.format(
                                 key,
+                                self.rel_path,
                                 self.rel_filename,
                                 ))
                     elif stripped != '':
