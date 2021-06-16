@@ -1865,7 +1865,7 @@ class App(object):
         with open(os.path.join(self.cabinet_dir, status_filename), 'w') as df:
             content = self.status_template.render({
                 'gen_time': datetime.datetime.now(datetime.timezone(datetime.timedelta())),
-                'errors': self.error_list,
+                'errors': sorted(self.error_list),
                 })
             df.write(content)
 
