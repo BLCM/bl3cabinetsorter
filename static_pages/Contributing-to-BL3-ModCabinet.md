@@ -34,6 +34,7 @@ area which looks like this:
     ### Name: Free Respec
     ### Version: 1.0.0
     ### Author: Apocalyptech
+    ### Contact: https://apocalyptech.com/contact.php
     ### Categories: cheat, economy
     ###
     ### License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
@@ -63,6 +64,17 @@ know if they're using the most recent version of a mod or not.  `Author` is
 mostly just there for the user's sake, so they can know who wrote the mod by
 just looking at their files.  The BL3 ModCabinet process will actually take your
 username from the directory it's stored in, in the github area.
+
+## Contact Info
+
+Mod files can optionally include contact information, if you want people to be
+able to find you to ask questions about the mod.  Be sure to only put information
+in here which you're comfortable having publicly available!  There are four
+options available: `Contact`, `Contact (URL)`, `Contact (Email)`, or
+`Contact (Discord)`.  The "email" variant will alter the display for the wiki
+slightly (to use "at" instead of `@`, and "dot" instead of `.`), but the others
+all just show the text exactly as-written in the mod file, so feel free to
+format them however you like.
 
 ## Assigning Categories
 

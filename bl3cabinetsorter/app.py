@@ -414,6 +414,10 @@ class ModFile(Cacheable):
         self.version = None
         self.license = None
         self.license_url = None
+        self.contact = None
+        self.contact_email = None
+        self.contact_discord = None
+        self.contact_url = None
         self.wiki_filename_base = None
         self.mod_desc = []
         self.readme_rel = None
@@ -502,6 +506,10 @@ class ModFile(Cacheable):
                 'rf': self.rel_filename,
                 'w': self.wiki_filename_base,
                 'a': self.mod_author,
+                'cg': self.contact,
+                'ce': self.contact_email,
+                'cu': self.contact_url,
+                'cd': self.contact_discord,
                 't': self.mod_title,
                 'i': self.mod_title_display,
                 'v': self.version,
@@ -546,6 +554,24 @@ class ModFile(Cacheable):
         self.video_urls = [ModURL(u) for u in input_dict['y']]
         self.urls = [ModURL(u) for u in input_dict['u']]
         self.categories = set(input_dict['c'])
+
+        # Contact fields, added 2021-06-16
+        if 'cg' in input_dict and input_dict['cg']:
+            self.contact = input_dict['cg']
+        else:
+            self.contact = None
+        if 'cu' in input_dict and input_dict['cu']:
+            self.contact_url = input_dict['cu']
+        else:
+            self.contact_url = None
+        if 'ce' in input_dict and input_dict['ce']:
+            self.contact_email = input_dict['ce']
+        else:
+            self.contact_email = None
+        if 'cd' in input_dict and input_dict['cd']:
+            self.contact_discord = input_dict['cd']
+        else:
+            self.contact_discord = None
 
     def get_full_rel_filename(self):
         """
@@ -633,6 +659,10 @@ class ModFile(Cacheable):
          - Video (can be specified multiple times)
          - Nexus (URL to mod at nexus)
          - URL (other URL)
+         - Contact
+         - Contact (URL)
+         - Contact (Email)
+         - Contact (Discord)
 
         We do some processing here to try and separate out any freeform "global"
         mod description text in the header, and a comment that might precede a
@@ -688,6 +718,14 @@ class ModFile(Cacheable):
                         elif key == 'author':
                             # Ignoring this; we actually take it from the directory
                             pass
+                        elif key == 'contact':
+                            self.contact = val
+                        elif key == 'contact (email)':
+                            self.contact_email = val
+                        elif key == 'contact (url)':
+                            self.contact_url = val
+                        elif key == 'contact (discord)':
+                            self.contact_discord = val
                         elif key == 'version':
                             if not self.version:
                                 self.version = val
@@ -739,7 +777,7 @@ class ModFile(Cacheable):
                             self.urls.append(ModURL(val))
                         else:
                             self.errors = True
-                            self.error_list.append('WARNING: Unknown key in "{} in `{}`'.format(
+                            self.error_list.append('WARNING: Unknown key "{}" in `{}`'.format(
                                 key,
                                 self.rel_filename,
                                 ))
@@ -855,6 +893,16 @@ class ModFile(Cacheable):
                 categories[catname] for catname in sorted(self.categories)
                 ]
             ])
+
+    def get_wiki_email_contact(self):
+        """
+        Get our email contact (if specified) in a format suitable for the
+        wiki (basically, obfuscate it so it's not just an email address)
+        """
+        if self.contact_email:
+            return '`{}`'.format(self.contact_email.replace('@', ' at ').replace('.', ' dot '))
+        else:
+            return None
 
 class Readme(Cacheable):
     """

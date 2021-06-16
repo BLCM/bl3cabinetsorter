@@ -2,6 +2,26 @@
 
 **Author:** {{ authors[mod.mod_author].wiki_link() }}
 
+{%- if mod.contact %}
+
+**Contact:** {{ mod.contact }}
+{%- endif %}
+
+{%- if mod.contact_url %}
+
+**Contact (web):** {{ mod.contact_url }}
+{%- endif %}
+
+{%- if mod.contact_email %}
+
+**Contact (email):** {{ mod.get_wiki_email_contact() }}
+{%- endif %}
+
+{%- if mod.contact_discord %}
+
+**Contact (Discord):** {{ mod.contact_discord }}
+{%- endif %}
+
 **Last Updated:** {{ mod.mod_time.strftime('%B %d, %Y') }}
 
 {%- if mod.version %}
