@@ -49,7 +49,7 @@
 {%- if mod.related_links|length > 0 %}
 
 **Other mods with the same name:**
-{% for link in mod.related_links %}
+{% for link in mod.related_links_sorted() %}
 - {{ link }}
 {% endfor %}
 {%- endif %}

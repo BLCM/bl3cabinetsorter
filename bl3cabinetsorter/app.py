@@ -904,6 +904,13 @@ class ModFile(Cacheable):
         else:
             return None
 
+    def related_links_sorted(self):
+        """
+        Returns a sorted version of our related links; used to ensure that
+        the mod pages have entirely predictable output.
+        """
+        return sorted(self.related_links)
+
 class Readme(Cacheable):
     """
     Class to hold information about README files.  We're mostly just trying
