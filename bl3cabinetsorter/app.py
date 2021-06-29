@@ -392,6 +392,10 @@ class FakeMod:
         """
         return self.mod_title.lower() < other.mod_title.lower()
 
+    def wiki_link(self):
+        global wiki_link
+        return wiki_link(self.mod_title, self.mod_title)
+
     def wiki_link_html(self):
         global wiki_link_html
         return wiki_link_html(self.mod_title, self.mod_title)
@@ -1506,6 +1510,13 @@ class App(object):
                     'HackerSmacker',
                     )),
                 ]
+        seen_cats['mayhem'] = [
+                FakeMod('Mayhem Mode Configurator', wiki_link_html('Apocalyptech', 'Apocalyptech')),
+                ]
+        if 'Apocalyptech' in self.author_cache:
+            self.author_cache['Apocalyptech'].add_mod(seen_cats['mayhem'][-1])
+        if 'SSpyR' in self.author_cache:
+            self.author_cache['SSpyR'].add_mod(seen_cats['randomizer'][-1])
 
         # Set up a reserved and created pages set
         home_filename = 'Home.md'
