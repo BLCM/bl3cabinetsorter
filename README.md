@@ -129,6 +129,7 @@ might end up wanting to take over running this thing.  Here's how:
 TODO
 ----
 
+- Add an author index page
 - Support doing initial git clones?
 - README/Mod Description parsing could probably use some tweaking,
   but will have to do that carefully, of course.
