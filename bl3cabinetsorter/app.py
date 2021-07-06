@@ -48,6 +48,9 @@ class Re(object):
     elsif $line =~ /(baz)/ { ... }
 
     Taken from http://stackoverflow.com/questions/597476/how-to-concisely-cascade-through-multiple-regex-statements-in-python
+
+    Obviously the Py3.8+ walrus operator would make this obsolete, but this was written
+    before that time.  Perhaps eventually I'll migrate to that...
     """
 
     def __init__(self):
@@ -1300,13 +1303,17 @@ class App(object):
         ('mode-balance', Category('General Gameplay and Balance: Game Mode Balance')),
         ('scaling', Category('General Gameplay and Balance: Scaling Changes')),
         ('mayhem', Category('General Gameplay and Balance: Mayhem Mode Changes')),
-        ('armsrace', Category('General Gameplay and Balance: Arms Race Changes')),
         ('element', Category('General Gameplay and Balance: Elements and Damage Types')),
         ('quest-changes', Category('General Gameplay and Balance: Quest Changes')),
         ('economy', Category('General Gameplay and Balance: Economy Changes')),
-        ('event', Category('General Gameplay and Balance: Timed Event Changes')),
         ('gameplay', Category('General Gameplay and Balance: Other Gameplay Changes')),
         ('randomizer', Category('General Gameplay and Balance: Randomizers')),
+
+        # Activities
+        ('trials', Category('Activities: Trials / Proving Grounds')),
+        ('takedowns', Category('Activities: Takedowns')),
+        ('event', Category('Activities: Seasonal Events')),
+        ('armsrace', Category('Activities: Arms Race')),
 
         # Characters and Skills
         ('char-overhaul', Category('Characters and Skills: Full Character Overhauls')),
