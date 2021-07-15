@@ -1311,6 +1311,7 @@ class App(object):
 
         # Activities
         ('trials', Category('Activities: Trials / Proving Grounds')),
+        ('slaughters', Category('Activities: Slaughters')),
         ('takedowns', Category('Activities: Takedowns')),
         ('event', Category('Activities: Seasonal Events')),
         ('armsrace', Category('Activities: Arms Race')),
