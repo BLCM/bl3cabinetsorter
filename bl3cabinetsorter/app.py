@@ -1431,6 +1431,7 @@ class App(object):
         self.sidebar_template = jinja_env.get_template('sidebar.md')
         self.author_template = jinja_env.get_template('author.md')
         self.category_template = jinja_env.get_template('categories.md')
+        self.authors_template = jinja_env.get_template('authors.md')
 
     def run(self, load_cache=True, quiet=False, verbose=False, **args):
         """
@@ -1531,8 +1532,9 @@ class App(object):
         status_filename = 'Wiki-Status.md'
         sidebar_filename = '_Sidebar.md'
         category_filename = 'Mod-Categories.md'
-        reserved_pages = set([home_filename, status_filename, sidebar_filename, category_filename])
-        created_pages = set([home_filename, status_filename, sidebar_filename, category_filename])
+        authors_filename = 'Authors.md'
+        reserved_pages = set([home_filename, status_filename, sidebar_filename, category_filename, authors_filename])
+        created_pages = set([home_filename, status_filename, sidebar_filename, category_filename, authors_filename])
 
         # Anything in our static_pages dir should be reserved
         self.logger.debug('Reading in static pages')
@@ -1789,7 +1791,17 @@ class App(object):
                             }),
                         )
 
+        # Write out "authors" page
+        self.logger.debug('Writing out Authors page')
+        self.write_wiki_file(wiki_files,
+                authors_filename,
+                self.authors_template.render({
+                    'authors': sorted(self.author_cache.items(), key=lambda t: t[0].lower()),
+                    })
+                )
+
         # Write out the Home page, linking to all categories which have mods
+        self.logger.debug('Writing out Home page')
         self.write_wiki_file(wiki_files,
                 home_filename,
                 self.home_template.render({

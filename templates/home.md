@@ -25,6 +25,7 @@ starting point.
 
 # Other Pages
 
+- [[Authors]]
 - [[About BL3 ModCabinet Wiki]]
 - [[Contributing to BL3 ModCabinet]]
 - [[Searching on the Wiki|Searching]]

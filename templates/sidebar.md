@@ -4,6 +4,7 @@
 - [[Searching]]
 - [[About BL3 ModCabinet Wiki]]
 - [[Contributing to BL3 ModCabinet]]
+- [[Authors]]
 - [[Mod Categories]]
 - [[Wiki Status]]
 
