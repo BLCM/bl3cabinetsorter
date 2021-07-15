@@ -129,10 +129,11 @@ might end up wanting to take over running this thing.  Here's how:
 TODO
 ----
 
-- Add an author index page
 - Support doing initial git clones?
 - README/Mod Description parsing could probably use some tweaking,
   but will have to do that carefully, of course.
+  - Don't strip the left side on Changelogs, so we retain multi-level
+    indentations?
 - Expand unit tests, and fix the couple that we're skipping
   - Make sure to test specifying a filename which doesn't exist
   - Test unicode vs. latin1 mod files
