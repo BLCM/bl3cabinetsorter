@@ -25,6 +25,7 @@ import os
 import re
 import sys
 import git
+import enum
 import gzip
 import json
 import lzma
@@ -403,6 +404,10 @@ class FakeMod:
         global wiki_link_html
         return wiki_link_html(self.mod_title, self.mod_title)
 
+class TagType(enum.Enum):
+    ORIG = enum.auto()
+    BLIMP = enum.auto()
+
 class ModFile(Cacheable):
     """
     Class to pull info out of a mod file.
@@ -418,17 +423,20 @@ class ModFile(Cacheable):
         self.mod_time = datetime.datetime.fromtimestamp(mtime)
         self.mod_title = None
         self.mod_title_display = None
+        self._mod_author = None
+        self.other_authors = []
+        self._authors_set = set()
         self.version = None
         self.license = None
         self.license_url = None
         self.contact = None
         self.contact_email = None
         self.contact_discord = None
-        self.contact_url = None
         self.wiki_filename_base = None
         self.mod_desc = []
         self.readme_rel = None
         self.readme_desc = []
+        self.homepage = None
         self.nexus_link = None
         self.screenshots = []
         self.video_urls = []
@@ -507,15 +515,19 @@ class ModFile(Cacheable):
             nl = str(self.nexus_link)
         else:
             nl = None
+        if self.homepage:
+            homepage = str(self.homepage)
+        else:
+            homepage = None
         return {
                 'ff': self.full_filename,
                 'rp': self.rel_path,
                 'rf': self.rel_filename,
                 'w': self.wiki_filename_base,
                 'a': self.mod_author,
+                'oa': self.other_authors,
                 'cg': self.contact,
                 'ce': self.contact_email,
-                'cu': self.contact_url,
                 'cd': self.contact_discord,
                 't': self.mod_title,
                 'i': self.mod_title_display,
@@ -527,6 +539,7 @@ class ModFile(Cacheable):
                 'l': self.readme_rel,
                 'o': self.changelog,
                 'e': sorted(self.related_links),
+                'h': homepage,
                 'n': nl,
                 's': [str(s) for s in self.screenshots],
                 'y': [str(y) for y in self.video_urls],
@@ -543,6 +556,13 @@ class ModFile(Cacheable):
         self.rel_filename = input_dict['rf']
         self.wiki_filename_base = input_dict['w']
         self.mod_author = input_dict['a']
+        # other_authors added 2022-07-26
+        if 'oa' in input_dict:
+            for oa in input_dict['oa']:
+                self.add_other_author(oa)
+        else:
+            self.other_authors = []
+
         self.mod_title = input_dict['t']
         self.mod_title_display = input_dict['i']
         self.version = input_dict['v']
@@ -557,6 +577,11 @@ class ModFile(Cacheable):
             self.nexus_link = ModURL(input_dict['n'])
         else:
             self.nexus_link = None
+        # Homepage added 2022-07-26
+        if 'h' in input_dict and input_dict['h']:
+            self.homepage = ModURL(input_dict['h'])
+        else:
+            self.homepage = None
         self.screenshots = [ModURL(u) for u in input_dict['s']]
         self.video_urls = [ModURL(u) for u in input_dict['y']]
         self.urls = [ModURL(u) for u in input_dict['u']]
@@ -567,10 +592,6 @@ class ModFile(Cacheable):
             self.contact = input_dict['cg']
         else:
             self.contact = None
-        if 'cu' in input_dict and input_dict['cu']:
-            self.contact_url = input_dict['cu']
-        else:
-            self.contact_url = None
         if 'ce' in input_dict and input_dict['ce']:
             self.contact_email = input_dict['ce']
         else:
@@ -585,6 +606,25 @@ class ModFile(Cacheable):
         Returns our "full" relative filename
         """
         return os.path.join(self.rel_path, self.rel_filename)
+
+    @property
+    def mod_author(self):
+        """
+        Return our mod_author (doing some fancy stuff in the setter, which
+        is why this is here).
+        """
+        return self._mod_author
+
+    @mod_author.setter
+    def mod_author(self, author):
+        """
+        Sets our main mod author, and initialize our stupid author-tracking set.
+        """
+        self._mod_author = author
+        if author is None:
+            self._authors_set = set()
+        else:
+            self._authors_set = {author.lower()}
 
     def set_title_display(self, mod_title_display):
         """
@@ -643,6 +683,31 @@ class ModFile(Cacheable):
             self.status = Cacheable.S_UPDATED
         self.changelog = new_changelog
 
+    def add_other_author(self, other_author):
+        """
+        Adds an "other author" entry to our list.  The ModCabinet uses the directory
+        structure to determine the author that it sorts with and links to, but users
+        might have collaborators listed, or even just list a different name.  As we
+        encounter these tags, we'll add them in so long as they're not identical to
+        the directory-name author (case-insensitively).
+        """
+        if self.mod_author is None:
+            # This should never happen 'cause this only gets called from
+            # `load_text_hotfixes`, which itself is called after `self.mod_author`
+            # is set.  But anyway, handle it good ol' ostrich-style.
+            return
+        other_author_lower = other_author.lower()
+        if other_author_lower in self._authors_set:
+            return
+        self._authors_set.add(other_author_lower)
+        self.other_authors.append(other_author)
+
+    def get_other_authors_report(self):
+        """
+        Returns a string of other authors suitable for inclusion on a wiki page.
+        """
+        return ', '.join(self.other_authors)
+
     def load_text_hotfixes(self, df):
         """
         This is currently the only known form of mod file - it's a text-based format
@@ -658,18 +723,23 @@ class ModFile(Cacheable):
          - Name
          - Categories
         Other keys which can be specified:
-         - Author (actually ignored, in favor of the directory name)
+         - Author
          - Version
          - License
          - License URL
-         - Screenshot (can be specified multiple times)
-         - Video (can be specified multiple times)
-         - Nexus (URL to mod at nexus)
-         - URL (other URL)
+         - Screenshot
+         - Video
+         - Nexus
+         - URL
          - Contact
-         - Contact (URL)
          - Contact (Email)
          - Contact (Discord)
+
+        Author is actually ignored, in favor of the directory name.  Screenshot,
+        Video, and URL can be usefully specified more than once to link to more
+        than one place.  "Nexus" is intended to link to the same mod at Nexus
+        Mods, if it's been uploaded there, too.  "URL" is intended for other
+        informational URLs which don't fit cleanly into Nexus/Video/Screenshot.
 
         We do some processing here to try and separate out any freeform "global"
         mod description text in the header, and a comment that might precede a
@@ -680,14 +750,24 @@ class ModFile(Cacheable):
         df.seek(0)
         cur_section = []
         found_raw_comment = False
+        found_empty_line_after_tags = False
+        tag_type = None
         for line in df.readlines():
             # If we get to a `Spark` line, break
             if line.startswith('Spark'):
+                # If we have unprocessed comment lines and we have *not* had any
+                # blank lines after our tags, consider any comment lines to be
+                # "true" comments and add them in now.
+                if found_raw_comment and cur_section and not found_empty_line_after_tags:
+                    for line in cur_section:
+                        self.add_comment_line(line)
                 break
 
             stripped = line.strip()
             if stripped == '':
                 # Found an empty line
+                if not found_empty_line_after_tags and tag_type is not None:
+                    found_empty_line_after_tags = True
                 if found_raw_comment and cur_section:
                     # If we're reading "raw" comments and have been reading in
                     # a comment section, append it to our full description
@@ -710,92 +790,229 @@ class ModFile(Cacheable):
                 if found_raw_comment:
                     cur_section.append(stripped)
                 else:
-                    if ': ' in stripped:
-                        key, val = stripped.split(': ', 1)
-                        key = key.strip().lower()
-                        val = val.strip()
-                        if key == 'name':
-                            if not self.mod_title:
-                                self.mod_title = val
-                            else:
-                                self.errors = True
-                                self.error_list.append('WARNING: More than one mod name specified in `{}/{}`'.format(
-                                    self.rel_path,
-                                    self.rel_filename,
-                                    ))
-                        elif key == 'author':
-                            # Ignoring this; we actually take it from the directory
-                            pass
-                        elif key == 'contact':
-                            self.contact = val
-                        elif key == 'contact (email)':
-                            self.contact_email = val
-                        elif key == 'contact (url)':
-                            self.contact_url = val
-                        elif key == 'contact (discord)':
-                            self.contact_discord = val
-                        elif key == 'version':
-                            if not self.version:
-                                self.version = val
-                            else:
-                                self.errors = True
-                                self.error_list.append('WARNING: More than one version specified in `{}/{}`'.format(
-                                    self.rel_path,
-                                    self.rel_filename,
-                                    ))
-                        elif key == 'categories':
-                            for cat in [c.strip().lower() for c in val.split(',')]:
-                                if cat in self.valid_categories:
-                                    self.categories.add(cat)
+                    if tag_type is None:
+                        # Checking BLIMP tags first because otherwise if a tag value
+                        # has a colon in it, it would get autodetected the wrong way.
+                        if stripped.startswith('@'):
+                            tag_type = TagType.BLIMP
+                        elif ': ' in stripped:
+                            tag_type = TagType.ORIG
+
+                    processed_tag = False
+
+                    # Process original-style tags
+                    if tag_type == TagType.ORIG:
+                        if ': ' in stripped:
+                            processed_tag = True
+                            key, val = stripped.split(': ', 1)
+                            key = key.strip().lower()
+                            val = val.strip()
+                            if key == 'name':
+                                if not self.mod_title:
+                                    self.mod_title = val
                                 else:
                                     self.errors = True
-                                    self.error_list.append('WARNING: Invalid category "{}" in `{}/{}`'.format(
-                                        cat,
+                                    self.error_list.append('WARNING: More than one mod name specified in `{}/{}`'.format(
                                         self.rel_path,
                                         self.rel_filename,
                                         ))
-                        elif key == 'license':
-                            # TODO: Honestly, we should probably allow multiple licenses...
-                            if not self.license:
-                                self.license = val
+                            elif key == 'author':
+                                self.add_other_author(val)
+                            elif key == 'contact':
+                                self.contact = val
+                            elif key == 'contact (email)':
+                                self.contact_email = val
+                            elif key == 'contact (discord)':
+                                self.contact_discord = val
+                            elif key == 'version':
+                                if not self.version:
+                                    self.version = val
+                                else:
+                                    self.errors = True
+                                    self.error_list.append('WARNING: More than one version specified in `{}/{}`'.format(
+                                        self.rel_path,
+                                        self.rel_filename,
+                                        ))
+                            elif key == 'categories':
+                                for cat in [c.strip().lower() for c in val.split(',')]:
+                                    if cat in self.valid_categories:
+                                        self.categories.add(cat)
+                                    else:
+                                        self.errors = True
+                                        self.error_list.append('WARNING: Invalid category "{}" in `{}/{}`'.format(
+                                            cat,
+                                            self.rel_path,
+                                            self.rel_filename,
+                                            ))
+                            elif key == 'license':
+                                # TODO: Honestly, we should probably allow multiple licenses...
+                                if not self.license:
+                                    self.license = val
+                                else:
+                                    self.errors = True
+                                    self.error_list.append('WARNING: More than one license specified in `{}/{}`'.format(
+                                        self.rel_path,
+                                        self.rel_filename,
+                                        ))
+                            elif key == 'license url':
+                                if not self.license_url:
+                                    self.license_url = val
+                                else:
+                                    self.errors = True
+                                    self.error_list.append('WARNING: More than one license URL specified in `{}/{}`'.format(
+                                        self.rel_path,
+                                        self.rel_filename,
+                                        ))
+                            elif key == 'screenshot':
+                                self.screenshots.append(ModURL(val))
+                            elif key == 'video':
+                                self.video_urls.append(ModURL(val))
+                            elif key == 'nexus':
+                                if not self.nexus_link:
+                                    self.nexus_link = ModURL(val)
+                                else:
+                                    self.errors = True
+                                    self.error_list.append('WARNING: More than one nexus URL specified in `{}/{}`'.format(
+                                        self.rel_path,
+                                        self.rel_filename,
+                                        ))
+                            elif key == 'url':
+                                self.urls.append(ModURL(val))
                             else:
                                 self.errors = True
-                                self.error_list.append('WARNING: More than one license specified in `{}/{}`'.format(
+                                self.error_list.append('WARNING: Unknown key "{}" in `{}/{}`'.format(
+                                    key,
                                     self.rel_path,
                                     self.rel_filename,
                                     ))
-                        elif key == 'license url':
-                            if not self.license_url:
-                                self.license_url = val
-                            else:
+
+                    # Parse BLIMP tags - https://github.com/apple1417/blcmm-parsing/tree/master/blimp#tag-intepretation
+                    # Honestly, this is hardly any different than our "generic" parsing, above.
+                    elif tag_type == TagType.BLIMP:
+                        if stripped.startswith('@'):
+                            processed_tag = True
+                            parts = stripped[1:].split(' ', 1)
+                            if len(parts) != 2:
                                 self.errors = True
-                                self.error_list.append('WARNING: More than one license URL specified in `{}/{}`'.format(
+                                self.error_list.append('WARNING: Bare tag "{}" found in `{}/{}`'.format(
+                                    parts,
                                     self.rel_path,
                                     self.rel_filename,
                                     ))
-                        elif key == 'screenshot':
-                            self.screenshots.append(ModURL(val))
-                        elif key == 'video':
-                            self.video_urls.append(ModURL(val))
-                        elif key == 'nexus':
-                            if not self.nexus_link:
-                                self.nexus_link = ModURL(val)
                             else:
-                                self.errors = True
-                                self.error_list.append('WARNING: More than one nexus URL specified in `{}/{}`'.format(
-                                    self.rel_path,
-                                    self.rel_filename,
-                                    ))
-                        elif key == 'url':
-                            self.urls.append(ModURL(val))
-                        else:
-                            self.errors = True
-                            self.error_list.append('WARNING: Unknown key "{}" in `{}/{}`'.format(
-                                key,
-                                self.rel_path,
-                                self.rel_filename,
-                                ))
-                    elif stripped != '':
+                                key, val = stripped[1:].split(' ', 1)
+                                key = key.strip().lower()
+                                val = val.strip()
+                                if key == 'title':
+                                    if not self.mod_title:
+                                        self.mod_title = val
+                                    else:
+                                        self.errors = True
+                                        self.error_list.append('WARNING: More than one mod name specified in `{}/{}`'.format(
+                                            self.rel_path,
+                                            self.rel_filename,
+                                            ))
+                                elif key == 'author':
+                                    self.add_other_author(val)
+                                elif key == 'main-author':
+                                    # Fudging this a bit; we're out of BLIMP spec on account of how we handle
+                                    # these anyway, though, alas.
+                                    self.add_other_author(val)
+                                elif key == 'contact':
+                                    if self.contact is None:
+                                        self.contact = val
+                                    else:
+                                        self.contact = f'{self.contact}, {val}'
+                                elif key == 'contact-email':
+                                    if self.contact_email is None:
+                                        self.contact_email = val
+                                    else:
+                                        self.errors = True
+                                        self.error_list.append('WARNING: More than one email contact specified in `{}/{}`'.format(
+                                            self.rel_path,
+                                            self.rel_filename,
+                                            ))
+                                elif key == 'contact-discord':
+                                    if self.contact_discord is None:
+                                        self.contact_discord = val
+                                    else:
+                                        self.errors = True
+                                        self.error_list.append('WARNING: More than one Discord contact specified in `{}/{}`'.format(
+                                            self.rel_path,
+                                            self.rel_filename,
+                                            ))
+                                elif key == 'version':
+                                    if not self.version:
+                                        self.version = val
+                                    else:
+                                        self.errors = True
+                                        self.error_list.append('WARNING: More than one version specified in `{}/{}`'.format(
+                                            self.rel_path,
+                                            self.rel_filename,
+                                            ))
+                                elif key == 'categories':
+                                    for cat in [c.strip().lower() for c in val.split(',')]:
+                                        if cat in self.valid_categories:
+                                            self.categories.add(cat)
+                                        else:
+                                            self.errors = True
+                                            self.error_list.append('WARNING: Invalid category "{}" in `{}/{}`'.format(
+                                                cat,
+                                                self.rel_path,
+                                                self.rel_filename,
+                                                ))
+                                elif key == 'license':
+                                    # TODO: Honestly, we should probably allow multiple licenses...
+                                    if not self.license:
+                                        self.license = val
+                                    else:
+                                        self.errors = True
+                                        self.error_list.append('WARNING: More than one license specified in `{}/{}`'.format(
+                                            self.rel_path,
+                                            self.rel_filename,
+                                            ))
+                                elif key == 'license-url':
+                                    if not self.license_url:
+                                        self.license_url = val
+                                    else:
+                                        self.errors = True
+                                        self.error_list.append('WARNING: More than one license URL specified in `{}/{}`'.format(
+                                            self.rel_path,
+                                            self.rel_filename,
+                                            ))
+                                elif key == 'screenshot':
+                                    self.screenshots.append(ModURL(val))
+                                elif key == 'video':
+                                    self.video_urls.append(ModURL(val))
+                                elif key == 'homepage':
+                                    if not self.homepage:
+                                        self.homepage = ModURL(val)
+                                    else:
+                                        self.errors = True
+                                        self.error_list.append('WARNING: More than one homepage specified in `{}/{}`'.format(
+                                            self.rel_path,
+                                            self.rel_filename,
+                                            ))
+                                elif key == 'nexus':
+                                    if not self.nexus_link:
+                                        self.nexus_link = ModURL(val)
+                                    else:
+                                        self.errors = True
+                                        self.error_list.append('WARNING: More than one nexus URL specified in `{}/{}`'.format(
+                                            self.rel_path,
+                                            self.rel_filename,
+                                            ))
+                                elif key == 'url':
+                                    self.urls.append(ModURL(val))
+                                else:
+                                    self.errors = True
+                                    self.error_list.append('WARNING: Unknown key "{}" in `{}/{}`'.format(
+                                        key,
+                                        self.rel_path,
+                                        self.rel_filename,
+                                        ))
+
+                    if not processed_tag and stripped != '':
                         # Okay, we got something that wasn't a `Key: Value` type thing, so
                         # let's just assume we're processing comments now.
                         cur_section.append(stripped)
@@ -1651,6 +1868,8 @@ class App(object):
                     print(mod.mod_desc)
                     print(mod.readme_desc)
                     print('Categories: {}'.format(mod.categories))
+                    if mod.homepage:
+                        print('Homepage: {}'.format(mod.homepage))
                     if mod.nexus_link:
                         print('Nexus Link: {}'.format(mod.nexus_link))
                     if len(mod.screenshots) > 0:

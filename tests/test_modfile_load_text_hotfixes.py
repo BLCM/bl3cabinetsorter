@@ -414,3 +414,60 @@ class ModFileTextHotfixesTests(unittest.TestCase):
         self.modfile.load_text_hotfixes(self.df)
         self.assertEqual(self.modfile.mod_desc, ['This is a mod', 'It is dope'])
 
+    def test_set_one_comment_with_code(self):
+        self.set_df_contents([
+            '# Name: Mod Name',
+            '# Categories: qol',
+            '# This is a mod',
+            'SparkPatchEntry,(1,1,0,),/Path/To/Obj.Obj,Attr,0,,0',
+            ])
+        self.modfile.load_text_hotfixes(self.df)
+        self.assertEqual(self.modfile.mod_desc, ['This is a mod'])
+
+    def test_set_one_comment_with_code_empty_line_inbetween(self):
+        self.set_df_contents([
+            '# Name: Mod Name',
+            '# Categories: qol',
+            '# This is a mod',
+            '',
+            'SparkPatchEntry,(1,1,0,),/Path/To/Obj.Obj,Attr,0,,0',
+            ])
+        self.modfile.load_text_hotfixes(self.df)
+        self.assertEqual(self.modfile.mod_desc, ['This is a mod'])
+
+    def test_set_one_comment_but_for_code(self):
+        self.set_df_contents([
+            '# Name: Mod Name',
+            '# Categories: qol',
+            '',
+            "# We want to interpret this as if it's a comment for the next statement",
+            'SparkPatchEntry,(1,1,0,),/Path/To/Obj.Obj,Attr,0,,0',
+            ])
+        self.modfile.load_text_hotfixes(self.df)
+        self.assertEqual(self.modfile.mod_desc, [])
+
+    def test_set_one_comment_and_one_for_code(self):
+        self.set_df_contents([
+            '# Name: Mod Name',
+            '# Categories: qol',
+            '# This is a mod',
+            '',
+            "# We want to interpret this as if it's a comment for the next statement",
+            'SparkPatchEntry,(1,1,0,),/Path/To/Obj.Obj,Attr,0,,0',
+            ])
+        self.modfile.load_text_hotfixes(self.df)
+        self.assertEqual(self.modfile.mod_desc, ['This is a mod'])
+
+    def test_set_one_comment_and_one_for_code_spaces_around(self):
+        self.set_df_contents([
+            '# Name: Mod Name',
+            '# Categories: qol',
+            '',
+            '# This is a mod',
+            '',
+            "# We want to interpret this as if it's a comment for the next statement",
+            'SparkPatchEntry,(1,1,0,),/Path/To/Obj.Obj,Attr,0,,0',
+            ])
+        self.modfile.load_text_hotfixes(self.df)
+        self.assertEqual(self.modfile.mod_desc, ['This is a mod'])
+

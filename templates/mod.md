@@ -2,14 +2,14 @@
 
 **Author:** {{ authors[mod.mod_author].wiki_link() }}
 
+{%- if mod.other_authors %}
+
+**Other Authors:** {{ mod.get_other_authors_report() }}
+{%- endif %}
+
 {%- if mod.contact %}
 
 **Contact:** {{ mod.contact }}
-{%- endif %}
-
-{%- if mod.contact_url %}
-
-**Contact (web):** {{ mod.contact_url }}
 {%- endif %}
 
 {%- if mod.contact_email %}
@@ -27,6 +27,11 @@
 {%- if mod.version %}
 
 **Most Recent Version:** {{ mod.version }}
+{%- endif %}
+
+{%- if mod.homepage %}
+
+**Homepage:** {{ mod.homepage.url }}
 {%- endif %}
 
 **In Categories:** {{ mod.get_cat_links(cats) }}
