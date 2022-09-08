@@ -182,6 +182,7 @@ class ModFileTextBlimpTagsTests(unittest.TestCase):
             '@nexus https://www.nexusmods.com/borderlands3/mods/128',
             '@url https://borderlands.com/en-US/news/2020-09-10-borderlands-3-patch-hotfixes-sept-10/',
             '@url https://borderlands.com/en-US/news/2020-09-17-borderlands-3-hotfixes-sept-17/',
+            '@pakfile Z_Mod_P.pak',
             ])
         self.modfile.load_text_hotfixes(self.df)
         self.assertEqual(self.modfile.mod_title, 'Mod Name')
@@ -203,6 +204,7 @@ class ModFileTextBlimpTagsTests(unittest.TestCase):
             ]))
         self.assertEqual(self.modfile.homepage.url, 'https://mod.com/')
         self.assertEqual(self.modfile.nexus_link.url, 'https://www.nexusmods.com/borderlands3/mods/128')
+        self.assertEqual(self.modfile.pakfile, 'Z_Mod_P.pak')
         self.assertFalse(self.modfile.has_errors())
 
     def test_load_full_headers_multiple_hashes(self):
@@ -221,6 +223,7 @@ class ModFileTextBlimpTagsTests(unittest.TestCase):
             '### @nexus https://www.nexusmods.com/borderlands3/mods/128',
             '### @url https://borderlands.com/en-US/news/2020-09-10-borderlands-3-patch-hotfixes-sept-10/',
             '### @url https://borderlands.com/en-US/news/2020-09-17-borderlands-3-hotfixes-sept-17/',
+            '### @pakfile Z_Mod_P.pak',
             ])
         self.modfile.load_text_hotfixes(self.df)
         self.assertEqual(self.modfile.mod_title, 'Mod Name')
@@ -242,6 +245,7 @@ class ModFileTextBlimpTagsTests(unittest.TestCase):
             ]))
         self.assertEqual(self.modfile.homepage.url, 'https://mod.com/')
         self.assertEqual(self.modfile.nexus_link.url, 'https://www.nexusmods.com/borderlands3/mods/128')
+        self.assertEqual(self.modfile.pakfile, 'Z_Mod_P.pak')
         self.assertFalse(self.modfile.has_errors())
 
     def test_load_full_headers_mixedcase(self):
@@ -260,6 +264,7 @@ class ModFileTextBlimpTagsTests(unittest.TestCase):
             '# @Nexus https://www.nexusmods.com/borderlands3/mods/128',
             '# @Url https://borderlands.com/en-US/news/2020-09-10-borderlands-3-patch-hotfixes-sept-10/',
             '# @Url https://borderlands.com/en-US/news/2020-09-17-borderlands-3-hotfixes-sept-17/',
+            '# @pakfile Z_Mod_P.pak',
             ])
         self.modfile.load_text_hotfixes(self.df)
         self.assertEqual(self.modfile.mod_title, 'Mod Name')
@@ -281,6 +286,7 @@ class ModFileTextBlimpTagsTests(unittest.TestCase):
             ]))
         self.assertEqual(self.modfile.homepage.url, 'https://mod.com/')
         self.assertEqual(self.modfile.nexus_link.url, 'https://www.nexusmods.com/borderlands3/mods/128')
+        self.assertEqual(self.modfile.pakfile, 'Z_Mod_P.pak')
         self.assertFalse(self.modfile.has_errors())
 
     def test_load_full_headers_uppercase(self):
@@ -299,6 +305,7 @@ class ModFileTextBlimpTagsTests(unittest.TestCase):
             '# @NEXUS https://www.nexusmods.com/borderlands3/mods/128',
             '# @URL https://borderlands.com/en-US/news/2020-09-10-borderlands-3-patch-hotfixes-sept-10/',
             '# @URL https://borderlands.com/en-US/news/2020-09-17-borderlands-3-hotfixes-sept-17/',
+            '# @PAKFILE Z_Mod_P.pak',
             ])
         self.modfile.load_text_hotfixes(self.df)
         self.assertEqual(self.modfile.mod_title, 'Mod Name')
@@ -320,6 +327,7 @@ class ModFileTextBlimpTagsTests(unittest.TestCase):
             ]))
         self.assertEqual(self.modfile.homepage.url, 'https://mod.com/')
         self.assertEqual(self.modfile.nexus_link.url, 'https://www.nexusmods.com/borderlands3/mods/128')
+        self.assertEqual(self.modfile.pakfile, 'Z_Mod_P.pak')
         self.assertFalse(self.modfile.has_errors())
 
     def test_load_full_headers_extra_spaces(self):
@@ -338,6 +346,7 @@ class ModFileTextBlimpTagsTests(unittest.TestCase):
             '@nexus        https://www.nexusmods.com/borderlands3/mods/128',
             '@url          https://borderlands.com/en-US/news/2020-09-10-borderlands-3-patch-hotfixes-sept-10/',
             '@url          https://borderlands.com/en-US/news/2020-09-17-borderlands-3-hotfixes-sept-17/',
+            '@pakfile      Z_Mod_P.pak',
             ])
         self.modfile.load_text_hotfixes(self.df)
         self.assertEqual(self.modfile.mod_title, 'Mod Name')
@@ -359,6 +368,7 @@ class ModFileTextBlimpTagsTests(unittest.TestCase):
             ]))
         self.assertEqual(self.modfile.homepage.url, 'https://mod.com/')
         self.assertEqual(self.modfile.nexus_link.url, 'https://www.nexusmods.com/borderlands3/mods/128')
+        self.assertEqual(self.modfile.pakfile, 'Z_Mod_P.pak')
         self.assertFalse(self.modfile.has_errors())
 
     def test_load_multiple_names(self):
@@ -496,6 +506,28 @@ class ModFileTextBlimpTagsTests(unittest.TestCase):
         self.assertEqual(self.modfile.categories, set(['qol']))
         self.assertTrue(self.modfile.has_errors())
         self.assertIn('Invalid category', self.errors[0])
+
+    def test_load_pakfile_url(self):
+        self.set_df_contents([
+            '@title Mod Name',
+            '@categories qol',
+            '@pakfile https://geocities.com/pakfiles/Z_One_P.pak',
+            ])
+        self.modfile.load_text_hotfixes(self.df)
+        self.assertEqual(self.modfile.pakfile, 'https://geocities.com/pakfiles/Z_One_P.pak')
+        self.assertFalse(self.modfile.has_errors())
+
+    def test_load_multiple_pakfiles(self):
+        self.set_df_contents([
+            '@title Mod Name',
+            '@categories qol',
+            '@pakfile Z_One_P.pak',
+            '@pakfile Z_Two_P.pak',
+            ])
+        self.modfile.load_text_hotfixes(self.df)
+        self.assertEqual(self.modfile.pakfile, 'Z_One_P.pak')
+        self.assertTrue(self.modfile.has_errors())
+        self.assertIn('More than one pakfile', self.errors[0])
 
     def test_set_no_comments(self):
         self.set_df_contents([

@@ -67,9 +67,35 @@
 <b><a href="{{ dl_base_url }}{{ mod.rel_url() }}">B3HM-Compatible URL / Download from Github</a></b>
 <br/>
 <em>(right click and "Save Link As")</em>
+{%- if mod.pakfile %}
+<br/>
+<span style="color: red"><b>Note:</b></span> Requires the pakfile listed below to work properly!
+{%- endif %}
 </td>
 </tr>
 </table>
+
+{%- if mod.pakfile %}
+
+<table>
+<tr>
+<td align="center">
+<b>Required Pakfile:</b>
+{%- if mod.pakfile.startswith('http') %}
+<a href="{{ mod.pakfile }}">{{ mod.pakfile }}</a>
+{%- else %}
+<a href="{{ dl_base_url }}{{ mod.rel_url_dir() }}/{{ mod.pakfile }}"><tt>{{ mod.pakfile }}</tt></a>
+<br/>
+<em>(right click and "Save Link As")</em>
+{%- endif %}
+<br/>
+Pakfiles should be stored in an <tt>OakGame\Content\Paks\~mods</tt> directory <em>(create it if
+needed)</em>.  Subdirectories can be added in there as well, using directory names to
+change pakfile load ordering.
+</td>
+</tr>
+</table>
+{%- endif %}
 
 <table>
 <tr>

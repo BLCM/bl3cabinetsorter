@@ -8,6 +8,7 @@ in your mod to the Github.  Here's how!
 - [Assigning Categories](#assigning-categories)
 - [Licensing](#licensing)
 - [Screenshots, Videos, Nexus Mods Links, and other URLs](#screenshots-videos-nexus-mods-links-and-other-urls)
+- [Pakfiles](#pakfiles)
 - [Update Frequency / Error Reporting](#update-frequency--error-reporting)
 - [Formatting your README for Maximum Results](#formatting-your-readme-for-maximum-results)
 
@@ -160,6 +161,32 @@ if you happen to have one.  `@screenshot`, `@video`, and `@url` can be specified
 multiple times.  Screenshots will be embedded on the wiki page, whereas Videos and
 URLs will just be linked.  `@nexus` can only appear once in the file, and can
 point to an alternate download location for the mod on Nexus.
+
+## Pakfiles
+
+Some modders have started playing around with pakfile modding, where a new pakfile
+is added to the game's `Paks` directory.  This allows for more flexibility and power
+than the hotfix-based modding we usually do, though it's still in a nascent state
+and requires a completely different modding pipeline.
+
+The ModCabinet doesn't really have good support for *pure* Pakfile mods, but in the
+event that any "hybrid" mods get created (which use both hotfixes *and* new Pakfiles),
+the ModCabinet does include support for that.  Namely, you can use a `@pakfile` tag
+to link to a pakfile, which will then be linked to from the mod's page:
+
+    @pakfile Z_ModName_P.pak
+
+If given just a filename like that, the cabinet will assume it lives in the same
+github directory as the hotfix mod itself.  You can instead provide a URL to the
+pakfile, if it's hosted elsewhere:
+
+    @pakfile https://geocities.com/my_cool_page/Z_ModName_P.pak
+
+As a note for pakfile mod authors: pakfiles should start with a `Z` or `z` so that
+they're always loaded after the game's pakfiles, and should end with `_P.pak`.
+Pakfiles should get installed into an `OakGame\Content\Paks\~mods` directory, and
+subdirectories can be used underneath that to enforce load ordering (they will
+load in alphanumeric order by directory name).
 
 ## Update Frequency / Error Reporting
 
