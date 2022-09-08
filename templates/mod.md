@@ -90,8 +90,7 @@
 {%- endif %}
 <br/>
 Pakfiles should be stored in an <tt>OakGame\Content\Paks\~mods</tt> directory <em>(create it if
-needed)</em>.  Subdirectories can be added in there as well, using directory names to
-change pakfile load ordering.
+needed)</em>.
 </td>
 </tr>
 </table>
