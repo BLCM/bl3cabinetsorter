@@ -6,6 +6,7 @@
 - [[Contributing to BL3 ModCabinet]]
 - [[Authors]]
 - [[Mod Categories]]
+- [[All Mods]]
 - [[Wiki Status]]
 
 **Borderlands 3 Mods**
