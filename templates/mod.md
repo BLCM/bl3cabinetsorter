@@ -59,14 +59,24 @@
 {% endfor %}
 {%- endif %}
 
-## Download Methods
+<table>
+<tr>
+<td align="center">
+<b><a href="{{ base_url }}{{ mod.rel_url_dir() }}">View Mod Folder</a></b>
+</td>
+</tr>
+</table>
+
+## Download
 
 <table>
 <tr>
 <td align="center">
-<b><a href="{{ dl_base_url }}{{ mod.rel_url() }}">B3HM-Compatible URL / Download from Github</a></b>
+<b><a href="{{ dl_base_url }}{{ mod.rel_url() }}">{{ mod.mod_title }}</a></b>
 <br/>
-<em>(right click and "Save Link As")</em>
+<em>(right click and "Save Link As", "Copy Link," (B3HM<br/>
+compatible!), or create a shortcut by dragging it into a<br/>
+folder)</em>
 {%- if mod.pakfile %}
 <br/>
 <span style="color: red"><b>Note:</b></span> Requires the pakfile listed below to work properly!
@@ -95,16 +105,6 @@ needed)</em>.
 </tr>
 </table>
 {%- endif %}
-
-<table>
-<tr>
-<td align="center">
-<b><a href="{{ base_url }}{{ mod.rel_url_dir() }}">View on Github</a></b>
-<br/>
-<em>(after clicking on a mod, right click on "Raw" or<br/>"Download," and then "Save Link As")</em>
-</td>
-</tr>
-</table>
 
 {%- if mod.nexus_link %}
 
