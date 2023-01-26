@@ -19,6 +19,13 @@ to [the main bl3mods Github repostiory](https://github.com/BLCM/bl3mods), and
 they need to have an extension of `.bl3hotfix`.  There are instructions for
 doing so [at the BLCMods Wiki](https://github.com/BLCM/BLCMods/wiki/Borderlands-3-Contribution).
 
+The cabinet now also supports indexing pakfile-only mods on here, though we
+are still working out what kind of limitations we might have for that kind
+of mod.  To have a pakfile-only mod indexed here on the cabinet, use a
+`.bl3pakinfo` extension instead, and make sure to include the `@pakfile`
+tag to specify your pakfile.  That way, the cabinet will list your pakfile
+properly without having any references to hotfix modding.
+
 Once you know how to do that, getting your mod in this wiki is easy: you just
 need to make sure that your mod file has the required `.bl3hotfix` file
 extension, and the appropriate comments up at the top of the file.  Once the
@@ -169,24 +176,29 @@ is added to the game's `Paks` directory.  This allows for more flexibility and p
 than the hotfix-based modding we usually do, though it's still in a nascent state
 and requires a completely different modding pipeline.
 
-The ModCabinet doesn't really have good support for *pure* Pakfile mods, but in the
-event that any "hybrid" mods get created (which use both hotfixes *and* new Pakfiles),
-the ModCabinet does include support for that.  Namely, you can use a `@pakfile` tag
-to link to a pakfile, which will then be linked to from the mod's page:
+The ModCabinet currently supports both pure Pakfile mods and "hybrid" Pakfile mods
+(which use both hotfixes *and* new Pakfiles).  For pure mods, make sure that your
+mod-description filename has a `.bl3pakinfo` extension rather than `.bl3hotfix`,
+but the file otherwise has the same syntax as "regular" hotfix mods.  To link to
+the pakfile properly, use a `@pakfile` tag to link to a pakfile, which will then
+be linked to from the mod's page.  This tag is *required* for `.bl3pakinfo`
+description files:
 
-    @pakfile Z_ModName_P.pak
+    @pakfile ModName_999999_P.pak
 
 If given just a filename like that, the cabinet will assume it lives in the same
 github directory as the hotfix mod itself.  You can instead provide a URL to the
 pakfile, if it's hosted elsewhere:
 
-    @pakfile https://geocities.com/my_cool_page/Z_ModName_P.pak
+    @pakfile https://geocities.com/my_cool_page/Mod_Name_999999_P.pak
 
-As a note for pakfile mod authors: pakfiles should start with a `Z` or `z` so that
-they're always loaded after the game's pakfiles, and should end with `_P.pak`.
-Pakfiles should get installed into an `OakGame\Content\Paks\~mods` directory, and
-subdirectories can be used underneath that to enforce load ordering (they will
-load in alphanumeric order by directory name).
+As a note for pakfile mod authors: pakfile filenames should end with something
+like `_999999_P.pak`.  The exact number to use is up to you, but you'll probably
+want it to be at least 30.  A large, obvious number like 999999 seems like
+a reasonable choice, though.  Pakfiles should get installed into an
+`OakGame\Content\Paks\~mods` directory, and subdirectories or file renames
+can be used underneath that to enforce load ordering (they will load in
+alphanumeric order by directory name).
 
 ## Update Frequency / Error Reporting
 

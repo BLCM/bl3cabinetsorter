@@ -69,6 +69,8 @@
 
 ## Download
 
+{%- if not mod.is_pak_only %}
+
 <table>
 <tr>
 <td align="center">
@@ -84,6 +86,7 @@ B3HM (web loading): Right click and "Copy Link"</em>
 </td>
 </tr>
 </table>
+{%- endif %}
 
 {%- if mod.pakfile %}
 
