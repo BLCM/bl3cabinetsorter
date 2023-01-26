@@ -74,9 +74,9 @@
 <td align="center">
 <b><a href="{{ dl_base_url }}{{ mod.rel_url() }}">{{ mod.mod_title }}</a></b>
 <br/>
-<em>B3HM or OHL (local file): Right click and "Save Link As"<br/>
-B3HM (web loading): Right click and "Copy Link"<br/>
-OHL (web loading): Create a shortcut by dragging into a folder</em>
+<em>OHL or B3HM (local file): Right click and "Save Link As"<br/>
+OHL (web loading): Create a shortcut by dragging into a folder<br/>
+B3HM (web loading): Right click and "Copy Link"</em>
 {%- if mod.pakfile %}
 <br/>
 <span style="color: red"><b>Note:</b></span> Requires the pakfile listed below to work properly!
